@@ -18,12 +18,13 @@ html {
 
 body {
   font-family: 'Open Sans', sans-serif;
-  font-size: 12pt;
+  font-size: 24pt;
   line-height: 1.67em;
   font-weight: 300;
 }
 
 h1, h2, h3, h4 {
+  font-weight: 300;
 }
 
 p {
