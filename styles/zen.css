@@ -13,7 +13,7 @@ Dark Red      C44D58
 /* Base */
 
 html {
-  padding: 5em;
+  padding: 12em;
 }
 
 body {
@@ -26,7 +26,7 @@ h1, h2, h3, h4 {
 
 p {
   font-size: 1.5em;
-  line-height: 1.67em;
+  line-height: 2em;
   font-weight: 300;
 }
 
