@@ -16,6 +16,7 @@
     <!-- Code Syntax Highlighting -->
     <link rel="stylesheet" href="/styles/monokai.css">
     <script src="/js/highlight-2/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
 
     <!-- KaTex -->
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.9.0-alpha2/katex.min.css">
@@ -161,7 +162,7 @@
 
   <h2>Let's code it in Scala</h2>
 
-  ```scala
+  <pre><code class="scala">
   import neuroflow.application.plugin.Notation._
   import neuroflow.core.Activator._
   import neuroflow.core._
@@ -179,20 +180,20 @@
       iterations = 2000
     )
   )
-  ```
+  </code></pre>
 
   Now we have a net, initialized with random weights between -1 and 1, a learning rate and maximum iterations for gradient descent. When no batch size is defined, the net assumes a full one. Then, we define the training data using inline vector notation and start training:
 
-  ```scala
+  <pre><code class="scala">
   val xs = Seq(->(0.0, 0.0), ->(0.0, 1.0), ->(1.0, 0.0), ->(1.0, 1.0))
   val ys = Seq(->(0.0), ->(1.0), ->(1.0), ->(0.0))
 
   net.train(xs, ys)
-  ```
+  </code></pre>
 
   ... ah, time for a fresh cup of sencha ... 
 
-  ```bash
+  <pre><code class="bash">
 
 
 
@@ -239,16 +240,16 @@
   19.752926278797165   
   -14.472887673690817  
   -14.474769706032983  
-  ```
+  </code></pre>
 
   Clearly our weights have changed and loss is small, looks like everything worked out. To check if our net can recognize bonsais, we feed it with all inputs:
 
-  ```bash
+  <pre><code class="bash">
   Input: DenseVector(0.0, 0.0)   Output: DenseVector(0.009977792013595178)
   Input: DenseVector(0.0, 1.0)   Output: DenseVector(0.9940081702899719)
   Input: DenseVector(1.0, 0.0)   Output: DenseVector(0.9940077326864107)
   Input: DenseVector(1.0, 1.0)   Output: DenseVector(0.0013940967243219436)
-  ```
+  </code></pre>
 
   As we can see, feeding our net with vectors <span class="tex" inline="true" data-expr="(0, 1)"></span> and <span class="tex" inline="true" data-expr="(1, 0)"></span> leads to a number close to 1, whereas feeding it with vectors <span class="tex" inline="true" data-expr="(0, 0)"></span> and <span class="tex" inline="true" data-expr="(1, 1)"></span> leads to a number close to 0. We finally did it! Our net can recognize bonsais, more, it can add binary numbers modulo two. Another interesting property of our trained net is its plot.
 
@@ -259,8 +260,6 @@
   To separate the space, the net draws a mountain landscape, and if we look at the colored surface, we see that only a bonsai gets the peak. 
 
   Thank you for reading. :-)
-
-  <script>hljs.initHighlightingOnLoad();</script>
 
   <div id="disqus_thread"></div>
 
