@@ -1,30 +1,39 @@
----
-title: 'Artificial Neural Networks'
-media_order: 'arch.png,bonsaispace.png,felix.jpg,ginseng.jpg,ginseng_detail.jpg,linear.png,sigmoid.png,derivative.png,felix-new2.jpg,wheel.png,wheel.png'
-published: true
-date: '07-01-2016 13:00'
-visible: true
-author: 'Felix Bogdanski'
-authorimage: felix-new2.jpg
----
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="About core principles of ANNs">
+    <meta name="author" content="Felix Bogdanski">
 
-<link rel="stylesheet" href="/user/themes/zen/js/highlight-2/styles/monokai.css">
-<script src="/user/themes/zen/js/highlight-2/highlight.pack.js"></script>
-<script>hljs.initHighlightingOnLoad();</script>
+    <title>Artificial Neural Networks</title>
 
-<!-- KaTex -->
-<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.9.0-alpha2/katex.min.css">
-<script src="//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.9.0-alpha2/katex.min.js"></script>
-<script>
-  window.onload = function() {
-      var tex = document.getElementsByClassName("tex");
-      Array.prototype.forEach.call(tex, function(el) {
-          var inline = el.getAttribute("inline") == "true";
-          katex.render(el.getAttribute("data-expr"), el, { displayMode: !inline });
-      });
-  };
-</script>
-<!-- /Katex -->
+    <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Open+Sans:700,400,300">
+    <link rel="stylesheet" href="/styles/zen.css">
+
+    <!-- Code Syntax Highlighting -->
+    <link rel="stylesheet" href="/styles/monokai.css">
+    <script src="/js/highlight-2/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    <!-- KaTex -->
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.9.0-alpha2/katex.min.css">
+    <script src="//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.9.0-alpha2/katex.min.js"></script>
+    <script>
+      window.onload = function() {
+          var tex = document.getElementsByClassName("tex");
+          Array.prototype.forEach.call(tex, function(el) {
+              var inline = el.getAttribute("inline") == "true";
+              katex.render(el.getAttribute("data-expr"), el, { displayMode: !inline });
+          });
+      };
+    </script>
+
+</head>
+
+<h1>Artificial Neural Networks</h1>
+<h3>Felix Bogdanski, since 7/1/2016</h3>
 
 Wolves have paws and jaws, birds feathers, the universe toroids, and we humans, well, we have our brain to build machines. Machines, capable of doing tedious tasks we no longer want to do, or to increase productivity, et cetera. We have been there before, back in industrialization times, and face a similar situation today, but in a more virtual, digital world. The machines we seek to build should have functionality, which is rather found in brains than muscles, e. g. recognizing patterns in data. Because our brain is a purely natural tool, it is a good blue print, so we study the structure behind this _organic intelligence_ and use it to create such machines. I think that we will never understand our brain entirely intellectually, because this kind of understanding comes from within the brain itself. Limited beings we are, aren't we? However, we can get close to human intelligence &mdash; as long as we are very precise about the task, our expectations and have enough examples to learn from.
 
