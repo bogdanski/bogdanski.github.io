@@ -36,7 +36,7 @@
   <h1>Artificial Neural Networks</h1>
   <h3>Felix Bogdanski, since 1.7.2016</h3>
 
-  Wolves have paws and jaws, birds feathers, the universe toroids, and we humans, well, we have our brain to build machines. Machines, capable of doing tedious tasks we no longer want to do, or to increase productivity, et cetera. We have been there before, back in industrialization times, and face a similar situation today, but in a more virtual, digital world. The machines we seek to build should have functionality, which is rather found in brains than muscles, e. g. recognizing patterns in data. Because our brain is a purely natural tool, it is a good blue print, so we study the structure behind this _organic intelligence_ and use it to create such machines. I think that we will never understand our brain entirely intellectually, because this kind of understanding comes from within the brain itself. Limited beings we are, aren't we? However, we can get close to human intelligence &mdash; as long as we are very precise about the task, our expectations and have enough examples to learn from.
+  Wolves have paws and jaws, birds feathers, the universe toroids, and we humans, well, we have our brain to build machines. Machines, capable of doing tedious tasks we no longer want to do, or to increase productivity, et cetera. We have been there before, back in industrialization times, and face a similar situation today, but in a more virtual, digital world. The machines we seek to build should have functionality, which is rather found in brains than muscles, e. g. recognizing patterns in data. Because our brain is a purely natural tool, it is a good blue print, so we study the structure behind this organic intelligence and use it to create such machines. I think that we will never understand our brain entirely intellectually, because this kind of understanding comes from within the brain itself. Limited beings we are, aren't we? However, we can get close to human intelligence &mdash; as long as we are very precise about the task, our expectations and have enough examples to learn from.
 
   <p class="gentle gentle-bottom text-center">
     <img src="/artificial-neural-networks/ginseng.jpg" style="width: 33%;" />
@@ -45,18 +45,18 @@
   There is a rich green, vigorous ginseng bonsai tree in my office. Every time I look at it, my brain fires with other pictures, words and situations related to it. If you and I would meet, we could have a decent conversation about the shape of bonsais. You could say that I can handle bonsai situations. The perception coming from my retina is linked with the visual cortex, and with other areas in my brain, for instance where language is processed. At the end and fully wired, I am nothing but a composite neural net. Now, would I recognize all kinds of bonsai trees through generalization? 
 
   <p class="gentle gentle-bottom text-center">
-    <img src="/artificial-neural-networks/ginseng_detail.jpg" style="width: 33%;" />
+    <img src="/artificial-neural-networks/ginsengdetail.jpg" style="width: 33%;" />
   </p>
 
-  What if I had never been to this room before and you send me the picture above. Would the leafs guide me into the right direction, that this is the crown of a ginseng bonsai tree? I would guess some kind of indoor plant in the first place. But a bonsai? Mh, not sure, maybe. The task of _classification_ can be quite tricky, because for natural results, we need a generalizing intelligence. To me, learning new things is something _I just do._ Even when I think about things, I _just think about things._ And when I learned something, I gracefully apply it, learn new things, and so on. It's all somehow implicit to me, and this is the great miracle of nature. But, miracles are hard to formalize and code. What can we do? Generalization means connecting dots between similar objects, and one option to achieve this is to let data flow through neural structures, which enforce compression and decompression. 
+  What if I had never been to this room before and you send me the picture above. Would the leafs guide me into the right direction, that this is the crown of a ginseng bonsai tree? I would guess some kind of indoor plant in the first place. But a bonsai? Mh, not sure, maybe. The task of classification can be quite tricky, because for natural results, we need a generalizing intelligence. To me, learning new things is something I just do. Even when I think about things, I just think about things. And when I learned something, I gracefully apply it, learn new things, and so on. It's all somehow implicit to me, and this is the great miracle of nature. But, miracles are hard to formalize and code. What can we do? Generalization means connecting dots between similar objects, and one option to achieve this is to let data flow through neural structures, which enforce compression and decompression. 
 
   ## The Structure of the Net
 
-  Artificial neural networks are around since the late 1940s. Solely inspired by nature, they imitate the processes of _biological_ neural networks and I think this is the reason why they work so well. If you search the subject, names pop up like Warren McCulloch, Walter Pitts or Frank Rosenblatt, Paul Werbos, and eventually later on you find things like:
+  Artificial neural networks are around since the late 1940s. Solely inspired by nature, they imitate the processes of biological neural networks and I think this is the reason why they work so well. If you search the subject, names pop up like Warren McCulloch, Walter Pitts or Frank Rosenblatt, Paul Werbos, and eventually later on you find things like:
 
   > Their neural networks also were the first artificial pattern recognizers to achieve human-competitive or even superhuman performance on important benchmarks such as traffic sign recognition [...], or the MNIST handwritten digits problem of Yann LeCun at NYU. 
   > 
-  > [https://en.wikipedia.org/wiki/Artificial_neural_network]
+  > [https://en.wikipedia.org/wiki/Artificialneural_network]
 
   If you group small neural networks to learn simple representations of the input, a technique known as [_Convolution_](http://znctr.com/convolutional-nets), you have a good tool for visual and auditory recognition in high resolutions, given our current hardware limitations. Further, independent neural nets can be chained together, to form composite organisms, which can learn tasks on their own, e. g. using reinforcement learning algorithms on top. Before we can advance to such architectures, we need to enhale the mathematical structure of a feed-forward net, because it is the basis for modern architectures.
 
@@ -64,18 +64,18 @@
     <img src="/artificial-neural-networks/arch.png" style="width: 50%;" />
   </p>
 
-  The net above has three layers. On the left, there is the _Input_ layer with two _Neurons_. It is simply the raw, untouched input. In the middle we have the _Dense_ layer with three neurons. Here is the area where dots are joined, to _learn_. The neurons carry _Activators_ <span class="tex" inline="true" data-expr="g"></span> and <span class="tex" inline="true" data-expr="h"></span>, plain functions, which can be considered as the cells ability to fire. A net can stack many layers, it can be _deep_. On the right we have the _Output_ layer, with one neuron. A net can have multiple input and output neurons, depending on the dimension of our data. The layers are densely connected through synapses, called _Weights_, since the thickness of the synapse determines the amplification between neurons. How to compute the net?
+  The net above has three layers. On the left, there is the input layer with two neurons. It is simply the raw, untouched input. In the middle we have the Dense layer with three neurons. Here is the area where dots are joined, to learn. The neurons carry Activators <span class="tex" inline="true" data-expr="g"></span> and <span class="tex" inline="true" data-expr="h"></span>, plain functions, which can be considered as the cells ability to fire. A net can stack many layers, it can be <em>deep</em>. On the right we have the output layer, with one neuron. A net can have multiple input and output neurons, depending on the dimension of our data. The layers are densely connected through synapses, called weights, since the thickness of the synapse determines the amplification between neurons. How to compute the net?
 
   <p class="tex" data-expr="Net(X, W) = h(g(x_1 w_1 + x_2 w_4) w_7 + g(x_1 w_2 + x_2 w_5) w_8 + ...)"></p>
 
-  Studying _biological_ neural networks, e. g. nets found in dead animals, it turns out that the connectivity patterns can be modelled through ordinary matrix multiplication. To compute a layer, we multiply inputs by weights and apply the cell's activator to fire. This result is the input of the next layer. If we do this recursively until we reach the output layer, our result is a number, usually between 0 and 1, depending on the activator's domain. This number can be seen as the answer of the net with respect to the given input.
+  Studying biological neural networks, e. g. nets found in dead animals, it turns out that the connectivity patterns can be modelled through ordinary matrix multiplication. To compute a layer, we multiply inputs by weights and apply the cell's activator to fire. This result is the input of the next layer. If we do this recursively until we reach the output layer, our result is a number, usually between 0 and 1, depending on the activator's domain. This number can be seen as the answer of the net with respect to the given input.
 
   <p class="tex" data-expr="X = \begin{bmatrix} x_1 & x_2 \end{bmatrix}"></p>
   <p class="tex" data-expr="W_1 = \begin{bmatrix} w_1 & w_2 & w_3 \\ w_4 & w_5 & w_6 \end{bmatrix}"></p>
   <p class="tex" data-expr="W_2 = \begin{bmatrix} w_7 & w_8 & w_9 \end{bmatrix}"></p>
   <p class="tex" data-expr="Net(X, W) = h(g(XW_1)W_2)"></p>
 
-  For the sake of brevity, we express this forward pass in matrix notation. The matrices <span class="tex" inline="true" data-expr="W_{1,2}"></span> contain the left and right weights coming in and out of the _Dense_ layer. Isn't it somewhat calming to know that behind the complex sounding term _Artificial Neural Network_ there is just a couple of matrices and nested function calls?
+  For the sake of brevity, we express this forward pass in matrix notation. The matrices <span class="tex" inline="true" data-expr="W_{1,2}"></span> contain the left and right weights coming in and out of the dense layer. Isn't it somewhat calming to know that behind the complex sounding term <em>Artificial Neural Network</em> there is just a couple of matrices and nested function calls?
 
   ## Training it
 
