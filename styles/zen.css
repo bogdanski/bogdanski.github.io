@@ -18,8 +18,8 @@ html {
 
 body {
   font-family: 'Open Sans', sans-serif;
-  font-size: 24pt;
-  line-height: 1.67em;
+  font-size: 14pt;
+  line-height: 2em;
   font-weight: 300;
 }
 
@@ -36,4 +36,8 @@ blockquote {
 
 #disqus_thread {
   margin-top: 120pt;
+}
+
+.text-center {
+  text-align: center;
 }
