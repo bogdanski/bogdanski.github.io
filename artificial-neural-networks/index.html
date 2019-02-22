@@ -51,7 +51,7 @@
 
   What if I had never been to this room before and you send me the picture above. Would the leafs guide me into the right direction, that this is the crown of a ginseng bonsai tree? I would guess some kind of indoor plant in the first place. But a bonsai? Mh, not sure, maybe. The task of classification can be quite tricky, because for natural results, we need a generalizing intelligence. To me, learning new things is something I just do. Even when I think about things, I just think about things. And when I learned something, I gracefully apply it, learn new things, and so on. It's all somehow implicit to me, and this is the great miracle of nature. But, miracles are hard to formalize and code. What can we do? Generalization means connecting dots between similar objects, and one option to achieve this is to let data flow through neural structures, which enforce compression and decompression. 
 
-  ## The Structure of the Net
+  <h2>The Structure of the Net</h2>
 
   Artificial neural networks are around since the late 1940s. Solely inspired by nature, they imitate the processes of biological neural networks and I think this is the reason why they work so well. If you search the subject, names pop up like Warren McCulloch, Walter Pitts or Frank Rosenblatt, Paul Werbos, and eventually later on you find things like:
 
@@ -78,7 +78,7 @@
 
   For the sake of brevity, we express this forward pass in matrix notation. The matrices <span class="tex" inline="true" data-expr="W_{1,2}"></span> contain the left and right weights coming in and out of the dense layer. Isn't it somewhat calming to know that behind the complex sounding term <em>Artificial Neural Network</em> there is just a couple of matrices and nested function calls?
 
-  ## Training it
+  <h2>Training it</h2>
 
   If we take our net the way it is, we already can feed it with input and compute a result. But the result would not make much sense, since our net is not trained to recognize bonsais. We need to train it, and we do so by repetition. Let's postulate a numerical representation of a bonsai tree:
 
@@ -129,7 +129,7 @@
 
   However, since this is a rather informal blog post, I don't want to go deeper into the mechanics here. If you are curious how the analytical gradients can be constructed algorithmically for batched gradient descent, have a look at [_NeuroFlow_](https://github.com/zenecture/neuroflow) for Scala. Personally, I find functional code easier to understand things than with curly LaTeX math equations. We use this implementation later.
 
-  ## Universal Approximator
+  <h2>Universal Approximator</h2>
 
   Now that we have found a way to train our net, we should be able to recognize bonsais with it. Let's plot the numeric representation of our bonsai tree in two-dimensional space:
 
@@ -160,7 +160,7 @@
 
   Theoretically, using this non-linear functional form and gradient descent training, we should be able to separate our non-linear bonsai space.
 
-  ## Let's code it in Scala
+  <h2>Let's code it in Scala</h2>
 
   ```scala
   import neuroflow.application.plugin.Notation._
