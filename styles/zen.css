@@ -23,3 +23,13 @@ body {
 h1, h2, h3, h4 {
   font-weight: 300;
 }
+
+p {
+  font-size: 1.5em;
+  line-height: 1.67em;
+  font-weight: 300;
+}
+
+blockquote {
+  font-size: 0.8em;
+}
