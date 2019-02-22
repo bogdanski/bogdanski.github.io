@@ -33,3 +33,7 @@ p {
 blockquote {
   font-size: 0.8em;
 }
+
+#disqus_thread {
+  margin-top: 120px;
+}
