@@ -50,10 +50,10 @@
   I want to present a neural learning approach, whose underlying technique can be used for many different scenarios where raw, unstructured text data is the primary source. Together, we will build a model, that is able to infer the category of new, unknown content. A significant part of the process will be the feature extraction, because computers understand numbers, not words. One example for a use case is a news crawler, which constantly searches the web for new content. When new content is found, it tries to infer the category, e. g. technology, sports, business, et cetera, to add it to the right search index.
 
   <p class="gentle gentle-bottom text-center">
-    <img src="/blog/text-classification/intro.png" style="width: 50%;" />
+    <img src="/text-classification/intro.png" style="width: 50%;" />
   </p>
 
-  The classification should be sufficiently precise, yielding reasonable results for us humans. Further, it should be able to abstract over the writing style, since the internet is for all people. Unsurprisingly, a well-trained artificial neural network will be the tool of our choice to achieve this. They are strong universal approximators naturally coping with non-linear shapes. Humans are mostly non-linear thinkers, so ANNs are good at learning all the subtle differences regarding the way we express ourselves through language. I wrote several articles with examples using ANNs, so if you are new to the topic, <a href="/blog/artificial-neural-networks">you may read this introduction.</a> We will not stay with the theory and actually code this intelligence in Scala using the lightweight library NeuroFlow. Everything is open source, so feel free to check the code and data on <a href="https://github.com/zenecture/neuroflow/blob/master/playground/src/main/scala/neuroflow/playground/ContextClassification.scala">GitHub</a>.
+  The classification should be sufficiently precise, yielding reasonable results for us humans. Further, it should be able to abstract over the writing style, since the internet is for all people. Unsurprisingly, a well-trained artificial neural network will be the tool of our choice to achieve this. They are strong universal approximators naturally coping with non-linear shapes. Humans are mostly non-linear thinkers, so ANNs are good at learning all the subtle differences regarding the way we express ourselves through language. I wrote several articles with examples using ANNs, so if you are new to the topic, <a href="/artificial-neural-networks">you may read this introduction.</a> We will not stay with the theory and actually code this intelligence in Scala using the lightweight library NeuroFlow. Everything is open source, so feel free to check the code and data on <a href="https://github.com/zenecture/neuroflow/blob/master/playground/src/main/scala/neuroflow/playground/ContextClassification.scala">GitHub</a>.
 
   <h2>Words are Numbers</h2>
 
@@ -106,7 +106,7 @@
   The NLP community has different models for this kind of problem. The one that works good for our scenario is the well known _word2vec Skip-gram_ model, which is a shallow neural net that computes similarities between words, depending on their context, using a clever hot-vector encoding scheme and a linear bottleneck to produce results. It was ultimately refined by Mikolov et al.<a href="#note-2"><sup>2</sup></a> If you are interested in the details, I suggest to read their paper.
 
   <p class="gentle gentle-bottom text-center">
-    <img src="/blog/text-classification/word2vecmodel.png" style="width: 50%;" />
+    <img src="/text-classification/word2vecmodel.png" style="width: 50%;" />
   </p>
 
   The key idea is to express a word as a vector of dimension _N_. Now, the question is, if words are vectors, how can we express their _meaning_, their _context_ in terms of numbers? If we simply count and index all words used in the data set, we get a numerical representation to compute a fingerprint of a given text corpus, but these numbers poorly interdepend, so we might not get natural results if we used these for training. A word alone may come with infinite meaning, so words only make sense if they stand in relation to other words. Let's express this in vector notation:
@@ -127,7 +127,7 @@
   To meet all expectations, we need to minimize the degree of contrariness of our mathematical expression, where _E_ is some error function measuring the distance between all sampled context windows. Since words are used in many different contexts, finding the optimal solution will inevitably lead to a compromise for large texts.
 
   <p class="gentle gentle-bottom text-center">
-    <img src="/blog/text-classification/word2vecspaceplot.png" style="width: 75%;" />
+    <img src="/text-classification/word2vecspaceplot.png" style="width: 75%;" />
   </p>
 
   The outcome is that words used frequently in similar contexts will huddle together, whereas words that don't share common contexts are far away within our space. This plot shows the visual representation of all words within our data set for _N=3_. Note that in practice, typically a much higher (20, 200, ...) dimension is used for the word vectors. But, humans as we are, plotting the third dimension explains the principle better than a thousand words.
@@ -143,7 +143,7 @@
   <pre><code class="bash">
   bin/word2vec -train all.txt -output all-vec.txt -debug 2 -size 20 -window 10 -sample 1e-4 -negative 5 -hs 0 -binary 0 -cbow 0
   </code></pre>
-  
+
   We set the word vector dimension to _N = 20_ and the window size to _cw = 10_, plus some other parameters. The output _all-vec.txt_ will give us a dictionary mapping from word to vector representation:
 
   <pre><code class="bash">
@@ -192,7 +192,7 @@
   Here, _netFile_ is the place where we store our trained net. With _maxSamples_ we want to limit the training set to 100 messages per category. The _dict_ is our recently created word2vec model loaded into the JVM heap. Both functions _readAll_ and _readSingle_ take care of loading message files to _strip_ their context, because we are interested in plain words without illegal characters. The function _normalize_ will map a set of texts to a set of respective word sets. The function _vectorize_ tries to find the vector representations for words of a given word set. If we have a close look at the _vectorize_ function, we notice that there happens a little more than just finding the corresponding vectors. Our model assigns a vector to each word, so one single message file will contain _k_ vectors of dimension _N = 20_, where _k_ is the word count. This is a very interesting perspective concerning the whole Big Data discussion, since the _curse of dimensionality_ can turn even small data into big data quite quickly.
 
   <p class="gentle gentle-bottom text-center">
-    <img src="/blog/text-classification/vecmeanplotalt.png" style="width: 75%;" />
+    <img src="/text-classification/vecmeanplotalt.png" style="width: 75%;" />
     <br>
     <small>The mean word of a text, simplified in ℝ<sup>2</sup></small>
   </p>
