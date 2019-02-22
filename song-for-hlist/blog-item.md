@@ -1,0 +1,450 @@
+---
+title: 'A Song for HList'
+published: true
+date: '30-05-2016 15:55'
+visible: true
+author: 'Felix Bogdanski'
+authorimage: felix-new2.jpg
+---
+
+<link rel="stylesheet" href="/user/themes/zen/js/highlight-2/styles/monokai.css">
+<script src="/user/themes/zen/js/highlight-2/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+In this article I want to motivate the existence of heterogenous lists, often simply called HLists, in Scala. Never heard of them? In NeuroFlow, you use them, because the layout graph is implemented as a HList. Think of a linked list that knows the types of its objects, instead of generalizing all objects to a type all objects have in common. While being much like the _TupleN_ class from a semantic perspective, it overcomes severe limitations of it. Together, we will derive a minimalistic HList implementation. We will show _why_ HLists not only are a good alternative for tuples, but also pretty good in reducing boilerplate and abstracting over arity. You can check the code of this HList implementation on [GitHub](https://github.com/zenecture/techtalk/tree/master/hlist/src/main/scala/hlist). If you are on the hunt for a full-fledged HList library ready for production use or some really good inspiration of what is possible at the type-level, I strongly recommend [Shapeless](https://github.com/milessabin/shapeless).
+
+## The Challenge
+
+Let's imagine a very simple telegram machine. The machine is a write-only machine, so all we can do is to send objects. Anyone can listen to this telegram machine if needed, but all _we_ care for is sending objects. The machine offers a simple API we can call to send objects in sequential order, e. g. letters or numbers, so the telegram machine can pipe these objects over the real wire to some other telegram machine.
+
+<p class="gentle gentle-bottom text-center">
+  <img src="/blog/song-for-hlist/telegram.png" style="width: 50%;" />
+</p>
+
+The protocol is also very simple: We send object A, if the transmission is okay, we simply get the same object back. If the transmission fails, we don't get it back. This pattern makes it possible for us to resend objects on failure. (Don't you worry about the response time in this example. :-))
+
+The thing is, we can't just send plain objects to the telegram machine. To make sure that our transmission will not fail, the object needs to be wrapped in a _sending envelope._ This envelope provides a _send_ function to enrich the object with required meta information for a frictionless transmission. Let's code it in Scala:
+
+```scala
+case class Σ[T](item: T) {
+  def send: Option[T] = Random.nextInt(2) match {
+    case x if x == 0 => None
+    case _ => Some(item)
+  }
+}
+```
+
+Here, our case class _Σ_ (sigma is for _sending envelope_) takes an item of type _T_ and offers to _send_ it to the telegram machine. The error probability is 0.5, expressed through this random number trick. When the transmission succeeds, we get _Some(item)_ back, if it fails, we get _None_ (both results being a refinement of _Option[T]_). No surprises here, the behavior is implemented just as discussed.
+
+Furthermore, let's define some objects and types, so we can send something meaningful over to the telegram machine:
+
+```scala
+object Alphabet {
+
+  case object A
+  case object B
+  case object C
+  case object D
+  // ...
+  case object X
+  case object Y
+  case object Z
+  case object __
+
+}
+```
+
+It is important to notice that all objects are absolutely unique. There are no relations between the types. The only type all these objects have in common is _Any_. Using our _Alphabet_ and _Σ_ we can now build arbitrary combinations and send them to the machine:
+
+```scala
+val message = (H, E, L, L, O, __, W, O, R, L, D)
+val prepared = message.productIterator.map(char => Σ(char))
+val extracted = prepared.map(_.send)
+```
+
+The _(H, E, L, L, O, \_\_, W, O, R, L, D)_-tuple is syntactic sugar applied by the compiler for a built-in _Tuple11_-class. After wrapping these into our sending envelope _Σ_, we can finally send the objects in sequential order. Remember, the success of the sending process is expressed as _Option[T]_, depending on the original object type _T_, and to us, it is somewhat important to not lose the type _T_ right after sending, because we need it for further processing.
+
+```scala
+val prepared: Iterator[Σ[Any]] = ...
+val extracted: Iterator[Option[Any]] = ...
+```
+
+But if we examine the inferred types after working with the objects, it says _Any_ everywhere! Darn, it looks like we lost precious type information all along the way! This is not what we want. All objects that we want to send over the wire are totally unique, they don't extend some common father class. If we operate on _Any_ right after sending, we can in fact just move object pointers, but we can't _call_ their properties, because types carry properties, and we just lost these. The reason for this is Scalas _Product_ implementation for _TupleN_. To element-wise map over tuples, Scala offers the _productIterator_, but this iterator is simply _Any_-typed, so the type information about _T_ is generalized to _Any_, thus lost. Even worse, the built-in _TupleN_ implementation just goes up to _Tuple22_ - so this message wouldn't even compile:
+
+```scala
+(T, H, I, S, __, I, S, __, A, __, V, E, R, Y, __, L, O, N, G, __, T, E, X, T)
+```
+
+Conclusion: by using Scalas elegant, built-in functionality for iterating over tuples, we would lose precious type information. Also, using the tuple, we would be limited to messages of length 22. That doesn't feel right. What if we try it with a regular _List_ instead of a tuple to overcome the length-issue at least:
+
+```scala
+T :: H :: I :: S :: __ :: I :: S :: __ :: A :: __ :: V :: E :: R :: Y :: __ :: L :: O :: N :: G :: __ :: T :: E :: X :: T :: Nil
+```
+
+Sure, using the list, the length is not the limit anymore, and we could map over this list building and sending envelopes, just as we did with the tuple before, but the loss of type information would be quite the same. The difference is: this time we lose the types right from the start, simply because of the nature of the _List_ type constructor. Because all object types are absolutely different, the Scala compiler will infer the lowest bound it can find, e. g. something like _List[Any]_. Since we want to keep the type information, using a list will also not work for us.
+
+Let's go back to the tuple. Maybe we shouldn't take ourselves all too serious and live with maximum tuple length 22 for the moment. (Well, messages must be short then - haha). What can we do to not lose type information when operating on items of a tuple? The tuple itself is generic, which is good and mandatory for keeping _T_. Let's look at the _productIterator_ again:
+
+```scala
+val message = (H, E, L, L, O, __, W, O, R, L, D)
+val prepared: Iterator[Σ[Any]] = message.productIterator.map(char => Σ(char)) // <--!
+```
+
+What do we want to do here? Simply speaking, we want to iterate over an arbitrary combination of objects, wrap these into a sending envelope _Σ_ and send the objects to the machine. What if instead of using the iterator, we provide a generic function which directly lifts all objects of this particular _Tuple11[\_]_ to give a _Tuple11[Σ[\_]]_:
+
+```scala
+def lift11[_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11]
+  (m: (_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11)) = {
+    def l[A](a: A) = Σ(a)
+    (l(m._1), l(m._2), l(m._3), l(m._4), l(m._5), l(m._6), l(m._7),
+      l(m._8), l(m._9), l(m._10), l(m._11))
+  }
+```
+
+No more evil iterators! The function _lift11_ would take a _Tuple11_ and return a _Tuple11_ with all objects lifted into the sending envelope _Σ_. Now we could perfectly work with this enriched tuple, i. e. calling the _send_ function to get the resulting _Option[T]_. So what's the catch?
+
+What if the message length is not 11, but 5? Or 3, 2, 1337? The fact that we would have to implement all remaining _liftN_ functions is obvious. Unfortunately, there comes a whole lot of boilerplate code with this approach. This just doesn't fit to our understanding of elegance. Plus, the limit of 22 objects for a message because of the fixed _TupleN_ instances makes it hard to compose longer messages.
+
+## HList to the rescue
+
+To combine the strength of the unbound _List_ class with the type-safety of the _TupleN_ classes, we need to create our own data structure which will suit our needs:
+
+<ul style="font-size: 1.5em; font-weight: 300;">
+<li>Keep track of the individual object types</li>
+<li>Operate on items without losing their type information, e. g. lifting objects into a higher kinded type <em>Σ</em></li>
+<li>Allow a chain of distinct objects of <em>arbitrary shape and length</em></li>
+<li>Little boilerplate code, one generic implementation for all cases</li>
+</ul>
+
+It looks like we need a solid HList! After goofing around with the type system for a while and a fresh cup of sencha, we came to a minimal implementation which is just fine for this article:
+
+```scala
+trait HList {
+  def ::[H](head: H): H :: this.type = hlist.::(head, tail = this)
+}
+
+case class ::[H, +T <: HList](head: H, tail: T) extends HList
+
+case object HNil extends HList
+```
+
+Let's have a quick look at the details. First, we simply have a marker trait _HList_. Whenever we need to refer to any other _HList_ on the type-level, we can declare the bounds to be of kind _\_ <: HList_, thus leading the compiler into the right direction when inferring. The case class _::_ (yes, a valid name for a type) has two value and type parameters, namely the _head_ item of type _H_ as well as the _tail_ list of type _+T <: HList_. Is it just like a regular list then? No, because both the case class _::_ and its second type parameter are bound to _HList_, we have a recursive type instead. The regular list is a recursive data structure on the value-level, but not on the type-level! In contrast, the heterogenous list is a recursive data structure on both the value- and type-level. The case object _HNil_, also an _HList_, is for stopping the recursion on both the type- and the value-level. Further, _HNil_ is the starting value for inductive proofs through implicit type class resolution. Every _HList_ comes with a function _::_ (yes, a valid name). This right-associative operator is for chaining objects in the usual Scala way, thus making the following syntax possible:
+
+```scala
+val list = H :: E :: L :: L :: O :: Nil
+val hlist = H :: E :: L :: L :: O :: HNil
+```
+
+If we compare both, they share the same look and feel on the right hand side of the assignment, with the exception of the last item being _HNil_ instead of _Nil_ for the _HList_. Let's annotate their types explicitly:
+
+```scala
+val list: List[Any] = H :: E :: L :: L :: O :: Nil
+val hlist: H :: E :: L :: L :: O :: HNil = H :: E :: L :: L :: O :: HNil
+```
+
+The _list_ comes with type _List[Any]_ - this is not even surprising. But, whoooops, when we look at the type of _hlist_, it says that the type of the list is the list itself. Now, how's that? Are we facing a situation with run-time values being available at compile-time? Almost! Here, the type coincides with the value, but if, for instance, we were using native integers, _1 :: HNil_ would have the type _Int :: HNil_, which is not the same.
+
+Keep in mind, there is Scalas special syntax for higher kinded types _F[A, B]_, which allows to write _A F B_ instead, so _::[O, HNil]_ is equivalent to _O :: HNil_, and since _::[H, +T <: HList]_ is a recursive type, this syntax is valid for HLists of any length.
+
+Now we have a rich and distinct _type landscape_ to work with and this is exactly what we need to operate on heterogenous objects while respecting their individual types. The question is: how do we implement these generic operations? How can we lift all objects of arbitrary type _T_ of an _HList_ to give a new _HList_ of objects with shape _Σ[T]_, solely on the type-level?
+
+## A Type-Level Functor
+
+Category theory says, an endofunctor is something that maps a function f between a category F:
+
+```scala
+trait Functor[F[_]] {
+  def map[A, B](fa: F[A])(f: A => B): F[B] 
+}
+
+Functor[List].map(List(A))(a => Σ(a))
+```
+
+If we try to translate this classical implementation of a _Functor_ to a _NaiveHFunctor_ taking _HLists_, we sooner or later notice that we would need to provide a dedicated function _f_ for each possible shape of _HList_:
+
+```scala
+trait NaiveHFunctor[L <: HList] {
+  def map[R <: HList](fa: L)(f: L => R): R = f(fa)
+}
+
+object NaiveHFunctor extends NaiveHFunctor[A :: B :: HNil]
+
+NaiveHFunctor.map(A :: B :: HNil)(l => Σ(A) :: Σ(B) :: HNil)
+NaiveHFunctor.map(C :: D :: HNil)(l => Σ(C) :: Σ(D) :: HNil) // doesn't compile
+```
+
+Basically, _NaiveHFunctor_ maps from _HList L_ to another _HList R_, but since we don't know anything about the concrete shapes of both _L_ and _R_, all we can do is to provide a function between full lists _f: L => R_. Instead, we would like to use a more granular function _g: T => Σ[T]_ applied element-wise to treat types individually. Our naive translation does not harness the recursive nature of _HList_, neither on the type nor the value-level. Thus, this implementation would be of little benefit when it comes to avoiding boilerplate.
+
+What we need is comparable to the principle of a _Functor_, but in order to ultimately abstract over all possible shapes of _HList_, we need to do the math on the type-level! The idea is to use Scalas implicit lookup mechanism to traverse through the recursive _HList_. When the compiler finds an _HFunctor_ for _HNil_ - we will make sure that it always will - we can guide the compiler to find an _HFunctor_ for _A :: HNil_ for any type _A_, et cetera. Think of proof by induction, or peano arithmetics. In fact, Scalas typesystem is turing complete, and our _HFunctor_ will be the connecting piece between all inductive steps:
+
+```scala
+trait HFunctor[L <: HList, F[_]] {
+  type Res <: HList
+}
+
+object HFunctor {
+  type Aux[L <: HList, R <: HList, F[_]] = HFunctor[L, F] { type Res = R }
+}
+```
+
+This _HFunctor_ maps from hlist _L_ to resulting hlist _Res_, ensuring all individual object types <em>T<sub>n</sub></em>, which are the essence of _L_, will be liftet into _F_, solely at the type-level. We write <em>HList(T<sub>n</sub>) => HList(F[T]<sub>n</sub>)</em> to refer to this operation. What is _Aux_ for? When the compiler inductively searches (or constructs) implicit _HFunctor_ instances for a desired result _A :: HNil_, he needs to find an _HFunctor_ instance for _HNil_ in advance. Therefore, he needs to search for _HFunctors_ with _Res=HNil_ being parameterized from _the outside_, but _Res_ is a type member, not a type parameter, so the _Aux_ type gives us the possiblity to parameterize this type member. One could ask: why do we use this type member instead of a regular type parameter at all? 
+
+```scala
+def lift[L <: HList, Res <: HList](l: L)(implicit f: HFunctor[L, F]): Res // tedious and not stringent, f.Res is not connected to Res
+def lift[L <: HList](l: L)(implicit f: HFunctor[L, F]): f.Res // this saves one type parameter to be inferred
+```
+
+To answer, let's come up with a first signature of _lift_. If we want to express this function, we need to give it a result type. This means, we need to refer to a result of a type-level computation as a result type. We could model this with a dedicated result type parameter in the signature, sure, but this means, that we would need to explicitly annotate the result type on the left hand side of assignments all the time! Also, the result type of _f_ would not be connected to this result type parameter, thus the compiler would not be able to infer it. To have a formally safe and sound result type, we need to take the type member _Res_ of the topmost instance _f_ found by the compiler. This _magic_ is safe, and in a minute we will know why.
+
+But now is a good moment (wait, _now_ is always a good moment! :-)) to introduce another type-level functor,  which we will need to get from sending envelope _Σ_ to the resulting _Option_ after calling _send_:
+
+```scala
+trait HFunctor1[L <: HList, F[_]] {
+  type Res <: HList
+}
+
+trait HFunctor2[L <: HList, F[_], G[_]] {
+  type Res <: HList
+}
+
+object HFunctor {
+  type Aux1[L <: HList, R <: HList, F[_]] = HFunctor1[L, F] { type Res = R }
+  type Aux2[L <: HList, R <: HList, F[_], G[_]] = HFunctor2[L, F, G] { type Res = R }
+}
+```
+
+Our original _HFunctor_ is called _HFunctor1_. The new _HFunctor2_ is for transforming an _HList_ of objects wrapped by higher kinded type _F_ to an _HList_ of objects wrapped by higher kinded type _G_. In category theory, this is called a natural transformation _F ~> G_, e. g. _Σ ~> Option_. We write <em>HList(F<sub>n</sub>) => HList(G<sub>n</sub>)</em> to refer to this operation in the context of an _HList_.
+
+Fully equipped, let's finish our implementation of _Lift_:
+
+```scala
+trait Lift[F[_]] {
+
+  import HList._
+  import HFunctor._
+
+  implicit def r[T]: T => F[T]
+
+  /**
+    * Lifts all items of given [[HList]] `l` into `F`.
+    */
+  def lift[L <: HList](l: L)(implicit f: HFunctor1[L, F]): f.Res = {
+    def trav(l: HList): HList = l match {
+      case head :: tail => :: (r(head), trav(tail))
+      case HNil => HNil
+    }
+    trav(l).asInstanceOf[f.Res]
+  }
+
+  implicit def liftNil: Aux1[HNil, HNil, F] = new HFunctor1[HNil, F] {
+    type Res = HNil
+  }
+
+  implicit def liftList[H, L <: HList, R <: HList]
+    (implicit f: Aux1[L, R, F], g: H => F[H]): Aux1[H :: L, F[H] :: R, F] = new HFunctor1[H :: L, F] {
+      type Res = F[H] :: R
+    }
+
+}
+```
+
+This is a rather big chunk of code, but it is important to study it as a whole. First, we define a trait _Lift_ which is parameterized by a higher kinded type _F_. The signature of _lift_ is unchanged; the implementation simply traverses through the given hlist _l_ applying function _r_ on the head to build the result. This result is safely cast to _f.Res_ at run-time.
+
+The actual magic of type-level computation is done through both the _liftNil_ and the _liftList_ implicit functions. The first one gives the compiler an _HFunctor_ f<sub>0</sub> for _HNil_, which is kind of a bastion of calm, because the compiler will always find it. The second one builds an _HFunctor_ f<sub>n</sub> by merging the previously found _HFunctor_ f<sub>n - 1</sub> with itself. This is expressed through the compound result type _Aux1[H :: L, F[H] :: R, F]_. Even more, this result type is the motor for the compiler to find a valid inference. Using the _Aux1_ type, we make sure that we always have a version of both lists, the original list _L_ and a _possible_ inference of type _R_. Now the compiler will recursively glue together these _Aux1_ functors, beginning with _HNil_, until it can resolve an instance of _Aux1_ having the same _L_ as the input of _lift_. We know that this instance will carry a result _Res_, and since this _Res_ was built inductively using _g: H =>F[H]_ and the same seed _HNil_ _L_ was built with, we can, with a clear conscience, let the compiler pick this as a valid inference or type-level transformation for the input type _L_ of _lift_. This is the lifting function <em>HList(T<sub>n</sub>) => HList(F[T]<sub>n</sub>)</em>.
+
+The implementation of the transformation function <em>HList(F<sub>n</sub>) => HList(G<sub>n</sub>)</em> is straightforward, using an additional higher kinded type _G_:
+
+```scala
+trait Trans[F[_], G[_]] {
+
+  import HList._
+  import HFunctor._
+
+  implicit def r[T]: F[T] => G[T]
+
+  /**
+    * Applies the Natural Transformation F ~> G for all items of given [[HList]] `l`.
+    */
+  def trans[L <: HList](l: L)(implicit f: HFunctor2[L, F, G]): f.Res = {
+    def trav(l: HList): HList = l match {
+      case head :: tail => :: (r(head.asInstanceOf[F[Any]]), trav(tail))
+      case HNil => HNil
+    }
+    trav(l).asInstanceOf[f.Res]
+  }
+
+  implicit def transHNil: Aux2[HNil, HNil, F, G] = new HFunctor2[HNil, F, G] {
+    type Res = HNil
+  }
+
+  implicit def transHList[H, L <: HList, R <: HList]
+    (implicit f: Aux2[L, R, F, G], g: F[H] => G[H]): Aux2[F[H] :: L, G[H] :: R, F, G] = new HFunctor2[F[H] :: L, F, G] {
+      type Res = G[H] :: R
+    }
+
+}
+```
+
+Note that _Aux2[F[H] :: L, G[H] :: R, F, G]_ actually denotes the natural transformation _F[H] ~> G[H]_.
+
+To finish, let's provide two concrete instance objects of our fresh _Lift_ and _Trans_ traits! Let's stick to our telegram example and go for _Σ_ and _Option_ as fixed higher kinded types:
+
+```scala
+object Liftable extends Lift[Σ] {
+  implicit def r[A]: A => Σ[A] = a => Σ(a)
+}
+
+object Transformable extends Trans[Σ, Option] {
+  implicit def r[A]: (Σ[A]) => Option[A] = a => a.send
+}
+```
+
+Now, after all the hard work is done, we can lift and transform heterogenous objects of arbitrary length and shape in a type-safe manner:
+
+```scala
+val hi = H :: I :: HNil
+val high = lift(hi)
+val higher: Σ[Σ[H]] :: Σ[Σ[I]] :: HNil = lift(lift(hi))
+
+val a = A :: 1 :: "2" :: 3.0 :: HNil
+val b = lift(a)
+val c: Σ[A] :: Σ[Int] :: Σ[String] :: Σ[Double] :: HNil = b
+val d = trans(c)
+val e: Option[A] :: Option[Int] :: Option[String] :: Option[Double] :: HNil = d
+```
+
+
+## Building the Mapper
+
+What have we built so far? We can lift objects of _HList_ into higher kinded type _F_, <em>HList(T<sub>n</sub>) => HList(F[T]<sub>n</sub>)</em>. Further, we can apply a natural transformation for objects wrapped by higher kinded type _F_ to higher kinded type _G_, <em>HList(F<sub>n</sub>) => HList(G<sub>n</sub>)</em>. The attentive reader will have noticed, that both implementations _Lift_ and _Trans_ use a simple trick to inject the actual lifting and transformation functions respectively:
+
+```scala
+trait Lift[F[_]] {
+  /* ... */
+  implicit def r[T]: T => F[T]
+  /* ... */
+
+  implicit def liftList[H, L <: HList, R <: HList]
+    (implicit f: Aux1[L, R, F], g: H => F[H]): Aux1[H :: L, F[H] :: R, F] = new HFunctor1[H :: L, F] {
+      type Res = F[H] :: R
+    }
+}
+```
+
+If we examine _liftList_, we can see that the function does need an implicit function _g: H => F[H]_ in order to compile. With the implicit function _r[T]: T => F[T]_ being in scope, we know that this will always happen. This technique is not just very simple, it is even safe: because the higher kinded type _F_ is fixed by the trait _Lift_, we know that, no matter the type _T_ in _r_, we always have a general function _Any => F[Any]_, which we can use at run-time. Since we never actually change the objects of the _HList_, the type _T_ of _r_ is only of interest at the type-level. This is okay as long as we want to work with objects in the context of higher kinded types, but what if we want to apply arbitrary functions on these objects? Clearly, this kind of type-level transformation needs special care, because it is a tough idea to simply apply a generalist function _Any => Any_ on heterogenous objects at run-time. How can we make sure that the result of the type-level computation influences the run-time behavior of our code?
+
+```scala
+object Players {
+  case class King(name: String)
+  case class Queen(name: String)
+  case class Pawn(name: String)
+  case class Tower(name: String)
+}
+
+val players = King("Karl") :: Queen("Quintessa") :: Pawn("Power Paul") :: Tower("Theodore") :: HNil
+```
+
+We have a _King_, a _Queen_, a _Pawn_ and a _Tower_. And again, because we are exploring heterogenous lists, these types share absolutely nothing. How can we map over _players_ to have a new _HList_ with the names of the players?
+
+```scala
+trait HMapper0[L <: HList] extends HFunctor0[L] {
+  def fs: HList
+}
+
+object HMapper {
+  type Aux0[L <: HList, R <: HList] = HMapper0[L] { type Res = R }
+}
+
+trait Func[X, Y] {
+  val f: X => Y
+}
+```
+
+Let's introduce _HMapper0_, which extends our previously defined _HFunctor0_  by a function _fs_ exposing access to an _HList_. This will be the place to store all mapping functions the compiler resolves implicitly. Another important part of the puzzle is _Func[X, Y]_, which is just a wrapper for functions _X => Y_. We need this to not confuse the compiler, because if we provide plain implicit functions, they will collide with certain implicit functions already defined in _scala.Predef_ (ambiguous implicits).
+
+```scala
+object ShowablePlayers {
+  import Players._
+  implicit object showKing extends Func[King, String] { val f = (k: King) => "Almighty King " + k.name }
+  implicit object showQueen extends Func[Queen, String] { val f = (q: Queen) => "Beautiful Queen " + q.name }
+  implicit object showPawn extends Func[Pawn, String] { val f = (p: Pawn) => "Strong Pawn " + p.name }
+  implicit object showTower extends Func[Tower, String] { val f = (t: Tower) => "Monstrous Tower " + t.name }
+}
+```
+
+Now we can be sure that each player has a dedicated _Func_ which maps to a _String_ using the player's name. Let's come up with the implementation of _Map_, which is very similar to _Lift_ and _Trans_:
+
+```scala
+object Map {
+
+  import HList._
+  import HMapper._
+
+  /**
+    * Applies [[Func]] instances in scope for respective items of given [[HList]] `l`.
+    */
+  def map[L <: HList](l: L)(implicit f: HMapper0[L]): f.Res = {
+    def bitrav(l: HList, r: HList): HList = l match {
+      case hd0 :: tl0 => r match {
+        case (hd1: Func[Any, Any]) :: tl1 => :: (hd1.f(hd0), bitrav(tl0, tl1))
+      }
+      case HNil => HNil
+    }
+    bitrav(l, f.fs).asInstanceOf[f.Res]
+  }
+
+  implicit def mapHNil[A, B]
+    (implicit g: Func[A, B]): Aux0[A :: HNil, B :: HNil] = new HMapper0[A :: HNil] {
+      type Res = B :: HNil
+      def fs = g :: HNil
+  }
+
+  implicit def mapHList[A, B, L <: HList, R <: HList]
+    (implicit f: Aux0[L, R], g: Func[A, B]): Aux0[A :: L, B :: R] = new HMapper0[A :: L] {
+      type Res = B :: R
+      def fs = g :: f.fs
+  }
+
+}
+```
+
+The only difference is that the implicitly resolved _Funcs_ will be stored in _fs_, so we can safely bi-traverse both the hlist of objects as well as their corresponding map functions. Note that at run-time, we operate on _Func[Any, Any]_, and this is absolutely fine, since the respective _Func_ instance applied in _bitrav_ is guaranteed to be a type-safe match for the current object.
+
+Let's use our new functionality:
+
+```scala
+val players = King("Karl") :: Queen("Quintessa") :: Tower("Theodore") :: Pawn("Power Paul") :: HNil
+val explicit = map(players)
+val prettyPlayers: String :: String :: String :: String :: HNil = explicit
+println(prettyPlayers) // Almighty King Karl :: Beautiful Queen Quintessa :: Monstrous Tower Theodore :: Strong Pawn Power Paul :: HNil
+```
+
+This looks pretty neat! Finally, we can freely apply arbitrary functions on arbitrary _HLists_. Let's express _Lift_ in terms of _Map_:
+
+```scala
+implicit def lift[T]: Func[T, Σ[T]] = new Func[T, Σ[T]] { val f: T => Σ[T] = a => Σ(a) }
+val abc = A :: B :: C :: HNil
+val lifted = map(abc)
+println(lifted) // Σ(A) :: Σ(B) :: Σ(C) :: HNil
+```
+
+In addition, let's also express _Trans_ in terms of _Map_:
+
+```Scala
+implicit def trans[T]: Func[Σ[T], Option[T]] = new Func[Σ[T], Option[T]] { val f: Σ[T] => Option[T] = a => a.send }
+val nums = Σ(1) :: Σ("2") :: Σ(3.0) :: HNil
+val sent = map(nums)
+println(sent) // None :: Some(2) :: None :: HNil
+```
+
+Note that _None_ is due to the random error probability we defined at the very beginning.
+
+## Final Thoughts
+
+The _HList_ gives us the freedom of the _List_ class as well as the type-safety of the _TupleN_ classes. One could ask: is it worth the stress? I would say: it depends. In my opinion, heterogenous lists, or similar structures, are the real deal when it comes to building _Domain Specific Languages_ or libraries that impose certain conditions regarding their usage.
+
+To me, ultimately, the actual beauty of Scalas type system is the ability to write run-time code while inductively proofing its correctness at compile-time. If we can formally prove the correctness of code through type-level programming - who would need to write a unit test for functionality that will only compile if all components are wired properly? (Wait: isn't this nothing else but an _implicit_ unit test? ;-))
+
+[Dotty](https://github.com/lampepfl/dotty), maybe the next Scala, may come with native HList support (no fixed _TupleN_-classes, but tuples implemented like HLists in _"a more efficient way"_ (?)) - which is something I would love to have in a future version of Scala!
+
+Thanks for reading.

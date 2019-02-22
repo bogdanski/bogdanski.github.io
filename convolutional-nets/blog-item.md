@@ -1,0 +1,231 @@
+---
+title: 'Convolutional Nets'
+media_order: 'bob.png,bobglasses.png,bob_glasses.png,convdensecomp.png,felix-new2-2.jpg,neuronsperlayer.png,tensor3daxis.png,bob_filter.png,bobconv.png,deepconvchain_l.png,crew.png,after.png,before.png,cifar.png'
+published: true
+date: '23-03-2018 11:15'
+visible: true
+author: 'Felix Bogdanski'
+authorimage: felix-new2-2.jpg
+---
+
+<link rel="stylesheet" href="/user/themes/zen/js/highlight-2/styles/monokai.css">
+<script src="/user/themes/zen/js/highlight-2/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+<!-- KaTex -->
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.9.0-alpha2/katex.min.css">
+<script src="//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.9.0-alpha2/katex.min.js"></script>
+<script>
+  window.onload = function() {
+      var tex = document.getElementsByClassName("tex");
+      Array.prototype.forEach.call(tex, function(el) {
+          var inline = el.getAttribute("inline") == "true";
+          katex.render(el.getAttribute("data-expr"), el, { displayMode: !inline });
+      });
+  };
+</script>
+<!-- /Katex -->
+
+In the article [Artificial Neural Networks](http://www.znctr.com/blog/artificial-neural-networks) we designed, trained and evaluated a fully connected, dense neural network. While purely dense nets are suitable tools for many data structures, at times it is their density which can be a little _too much_. In this article, we introduce a technique called _Convolution_ to not only tame the neural connectivity of dense nets, but also enhance the representational power for high dimensional data, such as images or audio, with respect to the hardware limits we currently have.
+
+## Density Reduction
+
+Bob is a good coder, he spends significant amounts of time in front of a screen. He wears his glasses when he works after all these years. Bob does not want to be disturbed being in a concentrated state, therefore we are interested to detect when he wears them.
+
+<p class="gentle gentle-bottom text-center">
+	<img src="/blog/convolutional-nets/bobglasses.png" style="width: 50%;" /><br>
+    <span class="tex" inline="true" data-expr="C_{glasses} = \binom{1}{0}, C_{noglasses} = \binom{0}{1}"></span>
+</p>
+
+An image comes in <span class="tex" inline="true" data-expr="400^2px"></span> with three color channels (RGB), which gives <span class="tex" inline="true" data-expr="400^2*3=480000px"></span> in total to sense. The raw net output will be [softmaxed](http://www.znctr.com/blog/digit-recognition#softmax) under a negative log-loss cross-entropy regime, using both classes <span class="tex" inline="true" data-expr="C_{(no)glasses}"></span> as training targets for classification.
+
+<p class="gentle gentle-bottom text-center">
+	<img src="/blog/convolutional-nets/neuronsperlayer.png" style="width: 40%;" /><br>
+</p>
+
+If we use a dense net with layout <span class="tex" inline="true" data-expr="L = [N, N/2, 2]"></span> and the image flattened into a vector, we would need <span class="tex" inline="true" data-expr="480k * 240k + 240k * 2 = 115.200.480.000"></span> weights. A single float number takes 4 bytes on the JVM, so this amount would take roughly 429 GB of RAM. The current high-end GPUs used for visual recognition offer about 24 GB RAM, so we have to reduce the amount of weights. If we cut out the middle layer to have <span class="tex" inline="true" data-expr="L = [N, 2]"></span>, which is the smallest layout possible, we would need <span class="tex" inline="true" data-expr="480k * 2 = 960.000"></span> weights, roughly 4 MB of RAM, which is a manageable size. Imposing a bottleneck, which leads to a simple representation of the input, can be used to reduce weights, indeed, if the model responds well to the drastic narrowing. However, it is obvious that dense layers and high resolution data quickly escalate the _curse of dimension_ and it is not guaranteed that bottlenecks always work. 
+
+<p class="gentle gentle-bottom text-center">
+	<img src="/blog/convolutional-nets/convdensecomp.png" style="width: 66%;" /><br>
+     <small>The vector on the left is fully connected, leading to <span class="tex" inline="true" data-expr="|Weights|_{Dense} = 8"></span>,<br>whereas the vector on the right is convoluted with <span class="tex" inline="true" data-expr="|Weights|_{Convolutional} = 2"></span></small>
+</p>
+
+Another approach to reduce the amount of weights is to use a convolutional layer. While the philosophy of a dense layer is to fully wire a fixed amount of in- and output neurons (<span class="tex" inline="true" data-expr="|In \times Out|"></span>), a convolutional layer dynamically generates output neurons using a field of weights <span class="tex" inline="true" data-expr="F"></span> which is slid over the input with stride <span class="tex" inline="true" data-expr="S"></span>, generating a neuron per step. With this technique, we have more control over the output dimensions and the neural connectivity can be significantly reduced, while too generating a simple version of the input. A fun exercise to the reader is to draw different configurations of <span class="tex" inline="true" data-expr="F, S"></span> and to express dense with convolutional layers. :-)
+
+## Extension to Tensor3D
+
+Now we can convolute vectors to reduce the connectivity, but a vector may be cumbersome to describe our three-dimensional material world, therefore we are interested in extending the technique to the third dimension. 
+
+<p class="gentle gentle-bottom text-center">
+	<img src="/blog/convolutional-nets/tensor3daxis.png" style="width: 66%;" /><br>
+    <small>A <span class="tex" inline="true" data-expr="Tensor3D"></span> can represent a color image, where RGB channels are bound to the <span class="tex" inline="true" data-expr="Z"></span> axis.</small>
+</p>
+
+Let us introduce <span class="tex" inline="true" data-expr="Tensor3D"></span>, which is a cubic volume accessed by coordinate triple <span class="tex" inline="true" data-expr="(X, Y, Z)"></span>. A vector can be embedded in it, say vertically using shape <span class="tex" inline="true" data-expr="(X, Y, Z) = (1, |Vector|, 1)"></span>, a matrix with shape <span class="tex" inline="true" data-expr="(Cols, Rows, 1)"></span> and in our case, a RGB image of Bob with <span class="tex" inline="true" data-expr="(Width, Height, Color)"></span>. The structure is versatile enough to represent other things from our material world, like sound spectra or mesh models.
+
+<p class="gentle gentle-bottom text-center">
+	<img src="/blog/convolutional-nets/bobconv.png" style="width: 50%;" /><br>
+    <small>Each stride <span class="tex" inline="true" data-expr="S"></span> of weight field <span class="tex" inline="true" data-expr="F"></span> is convoluted to generate a unit in the output tensor, the input <span class="tex" inline="true" data-expr="Z"></span> axis is <span class="tex" inline="true" data-expr="\sum"></span> up.<br>Multiple, independent weight fields <span class="tex" inline="true" data-expr="F_k"></span> can be attached to the input, generating a (deeper) tensor from it.<br><span class="tex" inline="true" data-expr="Conv(Tensor3D(X, Y, Z), F_k, S) \rightarrow Tensor3D(X, Y, Z_k)"></span></small>
+</p>
+
+The convolution operator applied on a <span class="tex" inline="true" data-expr="Tensor3D"></span> is much like the vectorial counterpart. The difference is, to generate the output, we slide the weight field <span class="tex" inline="true" data-expr="F"></span> over the input by dimensions <span class="tex" inline="true" data-expr="X, Y"></span> and we add over the <span class="tex" inline="true" data-expr="Z"></span> axis. The term _Deep Learning_ refers to this additive depth of the input volume, since the whole input tensor is flattened into one <span class="tex" inline="true" data-expr="Z"></span> layer of the output tensor, which possibly is even deeper than the input, depending on the number <span class="tex" inline="true" data-expr="k"></span> of independent weight fields <span class="tex" inline="true" data-expr="F_{1..k}"></span> attached. A weight field <span class="tex" inline="true" data-expr="F"></span> senses all dimensions <span class="tex" inline="true" data-expr="X,Y,Z"></span> of the input slice tensor with a dedicated neuron, leading to a number of learnable <span class="tex" inline="true" data-expr="|Weights| = X_F \times Y_F \times Z "></span> per field, and <span class="tex" inline="true" data-expr="|Weights| = X_F \times Y_F \times Z \times k"></span> in total for the layer. The actual convolution of one of the input slice tensors <span class="tex" inline="true" data-expr="T_{S_{XY}}"></span> and field tensor <span class="tex" inline="true" data-expr="F"></span> can be formulated by linearizing both tensors into matrices, <span class="tex" inline="true" data-expr="T_{lin} \cdot F_{lin} = (t_1f_1 + t_2f_2 + ... + t_{XYZ}f_{XYZ}) \equiv 1 \text{ Output Unit}"></span>, regularly multiplying them, while harnessing optimized linear algebra routines (BLAS).
+
+<p class="gentle gentle-bottom text-center">
+	<img src="/blog/convolutional-nets/deepconvchain_l.png" style="width: 50%;" /><br>
+    <small><span inline="true" class="tex" data-expr="Conv(Conv(Conv(Tensor3D(X, Y, Z), F_1, S_1), F_2, S_2), ...)"></span><br>Multiple convolutional layers can be stacked, usually ending with dense,<br>convolutional or averaging layers and a suitable loss function.</small>
+</p>
+
+Now we can chain multiple convolutional layers, leading to architectures which learn more and more simple representations of the input, depending on length and depth of the chain. For visual recognition, the weight fields <span class="tex" inline="true" data-expr="F_{1..k}"></span> usually are small, e. g. <span class="tex" inline="true" data-expr="F(X = 3, Y = 3)"></span>, but numerous <span class="tex" inline="true" data-expr="k"></span> make it deep, and with a stride <span class="tex" inline="true" data-expr="S(X > 1, Y > 1)"></span>, the spatial size of the input can be gradually diminished along the way to the loss function, enforcing compression to highlight features of the respective class to be recognized.
+
+## Visualizing the Learnings
+
+To understand what the convolutional layers actually do inside when learning different classes, we build a small architecture and visualize the activations per <span class="tex" inline="true" data-expr="Z"></span> layer _before_ and _after_ training. Bob works with sharp minded people, and they all wear glasses, and they all don't want to be disturbed when wearing them, so we have a little more pictures for training.
+
+<p class="gentle gentle-bottom text-center">
+	<img src="/blog/convolutional-nets/crew.png" style="width: 50%;" /><br>
+    <small><span class="tex" inline="true" data-expr="C_{noglasses} = \binom{0}{1}, C_{glasses} = \binom{1}{0}"></span></small>
+</p>
+
+The good thing with these avatars is, the different classes are all perfect copies, except the eye region of course. We force the net to actually learn the differences between glasses and no glasses. Otherwise, for our little experiment, the net might lazily learn arbitrary edges to separate, which might not be related to our classification problem at all. This is often the case when the net has too much freedom for too few training samples.
+
+Let us enter Scala land now. First, we load the PNG images of our avatars into tensors:
+
+```scala
+import neuroflow.application.plugin.Extensions._
+import neuroflow.application.plugin.Notation._
+import neuroflow.application.processor.Image._
+import neuroflow.core.Activators.Float._
+import neuroflow.core._
+import neuroflow.dsl.Convolution.autoTupler
+import neuroflow.dsl.Implicits._
+import neuroflow.dsl._
+import neuroflow.nets.gpu.ConvNetwork._
+
+val glasses = new java.io.File(path + "/glasses").list().map { s =>
+  (s"glasses-$s", loadTensorRGB(path + "/glasses/" + s).float, ->(1.0f, 0.0f))
+}.seq
+
+val noglasses = new java.io.File(path + "/noglasses").list().map { s =>
+  (s"noglasses-$s", loadTensorRGB(path + "/noglasses/" + s).float, ->(0.0f, 1.0f))
+}.seq
+```
+
+The target class vectors are tupled with the images. Then, we find a simple layout under the softmax loss function:
+
+```scala
+val f = ReLU
+
+val c0 = Convolution(dimIn = (400, 400, 3), padding = 1, field = 3, stride = 1, filters = 1, activator = f)
+val c1 = Convolution(dimIn = c0.dimOut,     padding = 1, field = 3, stride = 1, filters = 1, activator = f)
+val c2 = Convolution(dimIn = c1.dimOut,     padding = 1, field = 4, stride = 2, filters = 1, activator = f)
+val c3 = Convolution(dimIn = c2.dimOut,     padding = 1, field = 3, stride = 1, filters = 1, activator = f)
+
+val L = c0 :: c1 :: c2 :: c3 :: Dense(2, f) :: SoftmaxLogEntropy()
+
+val μ = 0
+
+implicit val weights = WeightBreeder[Float].normal(Map(
+  0 -> (μ, 0.1),  1 -> (μ, 1), 2 -> (μ, 0.1), 3 -> (μ, 1), 4 -> (1E-4, 1E-4)
+))
+
+val net = Network(
+  layout = L,
+  Settings[Float](
+    learningRate    =  { case (i, α) => 1E-3 },
+    updateRule      =  Momentum(μ = 0.8f),
+    batchSize       =  Some(20),
+    iterations      =  250
+  )
+)
+
+/*
+             _   __                      ________
+            / | / /__  __  ___________  / ____/ /___ _      __
+           /  |/ / _ \/ / / / ___/ __ \/ /_  / / __ \ | /| / /
+          / /|  /  __/ /_/ / /  / /_/ / __/ / / /_/ / |/ |/ /
+         /_/ |_/\___/\__,_/_/   \____/_/   /_/\____/|__/|__/
+                                                            1.6.2
+
+
+            Network : neuroflow.nets.gpu.ConvNetwork
+
+            Weights : 80.061 (≈ 0,305408 MB)
+          Precision : Single
+
+               Loss : neuroflow.core.SoftmaxLogEntropy
+             Update : neuroflow.core.Momentum
+
+             Layout : 402*402*3 ~> [3*3 : 1*1] ~> 400*400*1 (ReLU)
+                      402*402*1 ~> [3*3 : 1*1] ~> 400*400*1 (ReLU)
+                      402*402*1 ~> [4*4 : 2*2] ~> 200*200*1 (ReLU)
+                      202*202*1 ~> [3*3 : 1*1] ~> 200*200*1 (ReLU)
+                      2 Dense (ReLU)
+
+
+
+
+
+
+         O O O O O O O O O O      O O O O O O O O O O
+         O O O O O O O O O O      O O O O O O O O O O
+         O O O O O O O O O O      O O O O O O O O O O      O O O O O      O O O O O
+         O O O O O O O O O O      O O O O O O O O O O      O O O O O      O O O O O
+         O O O O O O O O O O      O O O O O O O O O O      O O O O O      O O O O O          O
+         O O O O O O O O O O      O O O O O O O O O O      O O O O O      O O O O O          O
+         O O O O O O O O O O      O O O O O O O O O O      O O O O O      O O O O O
+         O O O O O O O O O O      O O O O O O O O O O      O O O O O      O O O O O
+         O O O O O O O O O O      O O O O O O O O O O
+         O O O O O O O O O O      O O O O O O O O O O
+         
+*/
+
+```
+
+Our network is a shallow conv net, with a 2d-dense layer before the loss function, leading to 80.061 weights, which is a huge reduction, compared to the smallest dense net possible with 960.000 weights. Remember we want to enforce compression, so we attach only one filter per layer. The <span class="tex" inline="true" data-expr="ReLU"></span> activator is often used with convolutional nets (we discussed it [already](http://www.znctr.com/blog/neural-pokemon#relu)). A little padding is added to keep output sizes even. Next, we need to get images out of the layers.
+
+```scala
+def writeLayers(): Unit = {
+  samples.foreach {
+    case (id, xs, ys) =>
+      val t0 = (net Ω c0).apply(xs)
+      val t1 = (net Ω c1).apply(xs)
+      val t2 = (net Ω c2).apply(xs)
+      val t3 = (net Ω c3).apply(xs)
+      val i0s = imagesFromTensor3D(t0)
+      val i1s = imagesFromTensor3D(t1)
+      val i2s = imagesFromTensor3D(t2)
+      val i3s = imagesFromTensor3D(t3)
+      i0s.zipWithIndex.foreach { case (img, idx) => writeImage(img, path + s"/c0-$idx-$id", PNG) }
+      i1s.zipWithIndex.foreach { case (img, idx) => writeImage(img, path + s"/c1-$idx-$id", PNG) }
+      i2s.zipWithIndex.foreach { case (img, idx) => writeImage(img, path + s"/c2-$idx-$id", PNG) }
+      i3s.zipWithIndex.foreach { case (img, idx) => writeImage(img, path + s"/c3-$idx-$id", PNG) }
+  }
+}
+```
+
+The focus <span class="tex" inline="true" data-expr="\Omega"></span> does exactly this, it gives us the raw activations of a layer <span class="tex" inline="true" data-expr="c_i"></span> as tensor <span class="tex" inline="true" data-expr="t_i"></span>, and for each <span class="tex" inline="true" data-expr="Z"></span> layer of <span class="tex" inline="true" data-expr="t_i"></span>, a grayscale PNG image <span class="tex" inline="true" data-expr="i_{i_i}"></span> is written to file. What does it look like for <span class="tex" inline="true" data-expr="c_2"></span> before training?
+
+<p class="gentle gentle-bottom text-center">
+	<img src="/blog/convolutional-nets/before.png" style="width: 50%;" /><br>
+</p>
+
+Not much to see here, the weights sum out each other, since we initialized them drawn from normal distribution with symmetry at <span class="tex" inline="true" data-expr="\mu = 0"></span>. Now the net has all freedom to decide which regions are important for the classification. Then, we train for a few epochs and look again:
+
+<p class="gentle gentle-bottom text-center">
+	<img src="/blog/convolutional-nets/after.png" style="width: 50%;" /><br>
+</p>
+
+The net decided to highlight the eye region most. Sure, all regions are boosted by the weights since the size of the field is small and responsible for generating the whole output, but the average focus is on the eye region, compared to the neck, mouth, nose and forehead regions. This simplification makes it easier for the last fully connected layer to decide whether the input wears glasses. When it comes to images, a convolutional network is a graphical filter capable of learning.
+
+## Representational Power
+
+When I first heard about the curse of dimensionality dense neural networks bring, I thought that it might be only a matter of time until more powerful parallel processing units with enough of memory would be available, to overcome these limits. I think of a <strong>Quantum Processing Unit</strong> (QPU), with which I could train large images and other high dimensional data, using nothing but purely dense nets. I like the idea, because I find them a little more plausible on the biological level, e. g. why would a lazy organism chop and copy inputs several times, like the convolution operator does?
+
+<p class="gentle gentle-bottom text-center">
+	<img src="/blog/convolutional-nets/cifar.png" style="width: 50%;" /><br>
+    <small>The CIFAR set has 50.000 color images for training and 10.000 for testing from 10 classes á <span class="tex" inline="true" data-expr="32^2px"></span> and is a fast benchmark,<br>since deep models (>1 million weights) can be trained in a few hours on a Tesla P100 or a 1080Ti.</small>
+</p>
+
+So I started experiments with the CIFAR set and pure dense nets, and it seems there is a natural limit for dense nets when it comes to generalization on high dimensional data under a bottleneck. A dense net would be able to perfectly learn all 50k training images, but I couldn't get the recognition rates beyond 50 % on the test set. The size of the bottleneck was not really important, I tried several configurations, with as much weights as my GT750M would allow. Pictures were not enhanced in pre-processing steps. Instead, with a 9-layer deep convolutional network from scratch, I could get the rates over 70 % for the test set, which is decent. I only know of dense nets with _heavily pre-processed_ CIFAR images (contrast enhancing et al), which get close to this region. Conv nets, which are tuned by teams to the CIFAR challenge with up to 1000 layers, are somewhere in the 9X% area. My experiment shows that convolutional layers learn simple representations of features, like a graphical preprocessor or filter, and therefore have more representational power for high-dimensional data than dense nets, otherwise they couldn't be better on the raw, unenhanced test set, at least with the hardware we currently have. As a musician, I am interested in audio stuff too, so let's see what's next. (Spiking Neural Nets? :o))
+
+Thanks for reading.

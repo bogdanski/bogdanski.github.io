@@ -1,0 +1,173 @@
+---
+title: 'Time Series Prediction'
+published: true
+date: '25-01-2016 11:49'
+visible: true
+author: 'Felix Bogdanski'
+authorimage: felix-new2.jpg
+---
+
+<link rel="stylesheet" href="/user/themes/zen/js/highlight-2/styles/monokai.css">
+<script src="/user/themes/zen/js/highlight-2/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+<!-- KaTex -->
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.9.0-alpha2/katex.min.css">
+<script src="//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.9.0-alpha2/katex.min.js"></script>
+<script>
+  window.onload = function() {
+      var tex = document.getElementsByClassName("tex");
+      Array.prototype.forEach.call(tex, function(el) {
+          var inline = el.getAttribute("inline") == "true";
+          katex.render(el.getAttribute("data-expr"), el, { displayMode: !inline });
+      });
+  };
+</script>
+<!-- /Katex -->
+
+In the [last article](/blog/digit-recognition) I showed that a neural net can be trained with digits from several typesets to recognize digits from new, unknown typesets through generalization. Aside from these classification tasks, neural nets can be used to predict future values, behaviors or patterns solely based on learned history. In the machine learning literature, this is often referred to as time series prediction, because, you know, values over time need to be predicted. Hah! To illustrate the concept, we will train a neural net to learn the shape of a sinusoidal wave, so it can continue to draw the shape without any help. As always, I will use the library NeuroFlow, and you check the code on [GitHub.](https://github.com/zenecture/neuroflow)
+
+## Introduction of the shape
+
+If we, as humans, want to predict the future based on historic observations, we would have no other chance but to be guided by the shape drawn _so far._ Let's study the plot below, asking ourselves: How would a human continue the plot?
+
+<p class="gentle gentle-bottom text-center">
+	<img src="/blog/time-series-prediction/sinuspredictdr.png" style="width: 50%;" />
+</p>
+
+<p class="tex" data-expr="f(x) = sin(10*x)"></p>
+
+Intuitively, we would keep on oscillating up and down, just like the grey dotted line tries to rough out. To us, the continuation of the shape is reasonably easy to understand, but a machine does not have a gut feeling to ask for a good guess. However, we can summon a Frankenstein, which will be able to learn and continue the shape based on numbers. In order to do so, let's have a look at the raw, discrete data of our sinusoidal wave:
+
+
+<table class="table gentle gentle-bottom">
+<tr>
+<td><strong>x</strong></td>
+<td><strong>f(x)</strong></td>
+</tr>
+<tr>
+<td>0.0</td>
+<td>0.0</td>
+</tr>
+<tr>
+<td>0.05</td>
+<td>0.479425538604203</td>
+</tr>
+<tr>
+<td>0.10</td>
+<td>0.8414709848078965</td>
+</tr>
+<tr style="background: yellow">
+<td>0.15</td>
+<td>0.9974949866040544</td>
+</tr>
+<tr>
+<td>0.20</td>
+<td>0.9092974268256817</td>
+</tr>
+<tr>
+<td>0.25</td>
+<td>0.5984721441039564</td>
+</tr>
+<tr>
+<td>0.30</td>
+<td>0.1411200080598672</td>
+</tr>
+<tr style="background: yellow">
+<td>0.35</td>
+<td>-0.35078322768961984</td>
+</tr>
+<tr>
+<td>...</td>
+<td>...</td>
+</tr>
+<tr style="background: yellow">
+<td>0.75</td>
+<td>0.9379999767747389</td>
+</tr>
+</table>
+
+
+Ranging from 0.0 until 0.75, these discrete values drawn from our function with step size 0.05 will be the basis for training. Now, one could come up with the idea to just memorize _all_ values, so a sufficiently reasonable value can be picked based on comparison. For instance, to continue at the point 0.75 in our plot, we could simply examine the area close to 0.15, noticing a similar value close to 1, and hence go downwards. Well, of course this is cheating, but if a good cheat is a superior solution, why not cheat? Being hackers, we wouldn't care. What's really limiting here is the fact that the whole data set needs to be kept in memory, which can be infeasible for large sets, plus for more complex shapes, this approach would quickly result in a lot of weird rules and exceptions to be made in order to find comprehensible predictions.
+
+## Net to the rescue
+
+Let's go back to our table and see if a neural net can _learn_ the shape, instead of simply memorizing it. Here, we want our net architecture to be of kind <span class="tex" inline="true" data-expr="[3, 5, 3, 1]"></span>. Three input neurons, two hidden layers with five and three neurons respectively, as well as one neuron for the output layer will capture the data shown in the table.
+
+<p class="gentle gentle-bottom text-center">
+	<img src="/blog/time-series-prediction/sinuspredictnet.png" style="width: 50%;" />
+</p>
+
+A supervised training mode means, that we want to train our net with three discrete steps as input and the fourth step as the supervised training element. So we will train <span class="tex" inline="true" data-expr="a, b, c \rightarrow d"></span> and <span class="tex" inline="true" data-expr="e, f, g \rightarrow h"></span> et cetera, hoping that this way our net will capture the slope pattern of our sinusoidal wave. Let's code this in Scala:
+
+```scala
+import neuroflow.core.Activator._
+import neuroflow.core._
+import neuroflow.dsl._
+import neuroflow.nets.cpu.DenseNetwork._
+```
+
+First, we want a [Tanh](https://en.wikipedia.org/wiki/Hyperbolic_function#Hyperbolic_tangent) activation function, because the domain of our sinusoidal wave is <span class="tex" inline="true" data-expr="[-1, 1]"></span>, just like the hyperbolic tangent. This way we can be sure that we are not comparing apples with oranges. Further, we want random initial weights. Let's put this down:
+
+```scala
+val f = Tanh
+val sets = Settings(iterations = 500)
+val net = Network(Vector(3) :: Dense(5, f) :: Dense(3, f) :: Dense(1, f) :: SquaredError(), sets)
+```
+
+No surprises here. After some experiments, we can pick values for the settings instance, which will promise good convergence during training. Now, let's prepare our discrete steps drawn from the sinus function:
+
+```scala
+val group = 4
+val sinusoidal = Range.Double(0.0, 0.8, 0.05).grouped(group).toList.map(i => i.map(k => (k, Math.sin(10 * k))))
+val xsys = sinusoidal.map(s => (s.dropRight(1).map(_._2), s.takeRight(1).map(_._2)))
+val xs = xsys.map(_._1)
+val ys = xsys.map(_._2)
+net.train(xs, ys)
+```
+
+We draw samples from _Range_ with step size 0.05. After this, we construct our training values <span class="tex" inline="true" data-expr="xs"></span> as well as supervised output values <span class="tex" inline="true" data-expr="ys"></span>. Here, a group consists of 4 steps, with 3 steps as input and the last step as the supervised value.
+
+```bash
+[INFO] [25.01.2016 14:07:51:677] [run-main-5] Taking step 499 - error: 1.4395661497489177E-4  , error per sample: 3.598915374372294E-5
+[INFO] [25.01.2016 14:07:51:681] [run-main-5] Took 500 iterations of 500 with error 1.4304189739640242E-4  
+[success] Total time: 4 s, completed 25.01.2016 14:20:56
+```
+
+After a pretty short time, we see good news. Now, how can we check if our net can successfully predict the sinusoidal wave? We can't simply call our net like a sinus function to map from one input value to one output value, e. g. something like <span class="tex" inline="true" data-expr="Net(0.75) == sin(0.75)"></span>. Our net does not care about any <span class="tex" inline="true" data-expr="x"></span> values, because it was trained purely based on the function values <span class="tex" inline="true" data-expr="f(x)"></span>, or the slope pattern in general. We need to feed our net with a three-dimensional input vector holding the first three, original function values to predict the fourth step, then drop the first original step and append the recently predicted step to predict the fifth step, et cetera. In other words, we need to _traverse_ the net. Let's code this:
+
+```scala
+val initial = Range.Double(0.0, 0.15, 0.05).zipWithIndex.map(p => (p._1, xs.head(p._2)))
+val result = predict(net, xs.head, 0.15, initial)
+result.foreach(r => println(s"${r._1}, ${r._2}"))
+```
+with
+
+```scala
+@tailrec def predict(net: Network, last: Seq[Double], i: Double, results: Seq[(Double, Double)]): Seq[(Double, Double)] = {
+  if (i < 4.0) {
+    val score = net.evaluate(last).head
+    predict(net, last.drop(1) :+ score, i + 0.05, results :+ (i, score))
+  } else results
+}
+```
+
+So, basically we don't just continue to draw the sinusoidal shape at the point 0.75, we draw the entire shape right from the start until 4.0 - solely based on our trained net! Now, let's see how our Frankenstein will complete the sinusoidal shape from 0.75 on:
+
+<p class="gentle gentle-bottom text-center">
+	<img src="/blog/time-series-prediction/sinuspredictfintwo.png" style="width: 50%;" />
+</p>
+
+I'd say, pretty neat? Keep in mind, here, the discrete predictions are connected through splines. Another interesting property of our trained net is its prediction compared to the original sinus function when taking the limit towards 4.0. Let's plot both:
+
+<p class="gentle gentle-bottom text-center">
+	<img src="/blog/time-series-prediction/sinuspredictfin.png" style="width: 50%;" />
+</p>
+
+The purple line is the original sinusoidal wave, whereas the green line is the prediction of our net. The first steps show great consistency, but slowly the curves diverge a little over time, as uncertainties will add up. To keep this divergence rather low, one could fine tune settings, for instance numeric precision. However, if one is taking the limit towards infinity, a perfect fit is illusory.
+
+## Final thoughts
+
+That's it! We have trained our net to learn and continue the sinusoidal shape. Now, I know that this is a rather academic example, but to train a neural net to learn more complex shapes is straightforward from here.
+
+Thanks for reading!
