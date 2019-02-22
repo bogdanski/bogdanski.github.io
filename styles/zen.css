@@ -18,16 +18,15 @@ html {
 
 body {
   font-family: 'Open Sans', sans-serif;
-}
-
-h1, h2, h3, h4 {
-  font-weight: 300;
-}
-
-p {
   font-size: 12pt;
   line-height: 2em;
   font-weight: 300;
+}
+
+h1, h2, h3, h4 {
+}
+
+p {
 }
 
 blockquote {
