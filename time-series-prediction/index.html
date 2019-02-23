@@ -55,7 +55,7 @@
   If we, as humans, want to predict the future based on historic observations, we would have no other chance but to be guided by the shape drawn _so far._ Let's study the plot below, asking ourselves: How would a human continue the plot?
 
   <p class="gentle gentle-bottom text-center">
-    <img src="/blog/time-series-prediction/sinuspredictdr.png" style="width: 50%;" />
+    <img src="/time-series-prediction/sinuspredictdr.png" style="width: 50%;" />
   </p>
 
   <p class="tex" data-expr="f(x) = sin(10*x)"></p>
@@ -118,7 +118,7 @@
   Let's go back to our table and see if a neural net can _learn_ the shape, instead of simply memorizing it. Here, we want our net architecture to be of kind <span class="tex" inline="true" data-expr="[3, 5, 3, 1]"></span>. Three input neurons, two hidden layers with five and three neurons respectively, as well as one neuron for the output layer will capture the data shown in the table.
 
   <p class="gentle gentle-bottom text-center">
-    <img src="/blog/time-series-prediction/sinuspredictnet.png" style="width: 50%;" />
+    <img src="/time-series-prediction/sinuspredictnet.png" style="width: 50%;" />
   </p>
 
   A supervised training mode means, that we want to train our net with three discrete steps as input and the fourth step as the supervised training element. So we will train <span class="tex" inline="true" data-expr="a, b, c \rightarrow d"></span> and <span class="tex" inline="true" data-expr="e, f, g \rightarrow h"></span> et cetera, hoping that this way our net will capture the slope pattern of our sinusoidal wave. Let's code this in Scala:
@@ -179,13 +179,13 @@
   So, basically we don't just continue to draw the sinusoidal shape at the point 0.75, we draw the entire shape right from the start until 4.0 - solely based on our trained net! Now, let's see how our Frankenstein will complete the sinusoidal shape from 0.75 on:
 
   <p class="gentle gentle-bottom text-center">
-    <img src="/blog/time-series-prediction/sinuspredictfintwo.png" style="width: 50%;" />
+    <img src="/time-series-prediction/sinuspredictfintwo.png" style="width: 50%;" />
   </p>
 
   I'd say, pretty neat? Keep in mind, here, the discrete predictions are connected through splines. Another interesting property of our trained net is its prediction compared to the original sinus function when taking the limit towards 4.0. Let's plot both:
 
   <p class="gentle gentle-bottom text-center">
-    <img src="/blog/time-series-prediction/sinuspredictfin.png" style="width: 50%;" />
+    <img src="/time-series-prediction/sinuspredictfin.png" style="width: 50%;" />
   </p>
 
   The purple line is the original sinusoidal wave, whereas the green line is the prediction of our net. The first steps show great consistency, but slowly the curves diverge a little over time, as uncertainties will add up. To keep this divergence rather low, one could fine tune settings, for instance numeric precision. However, if one is taking the limit towards infinity, a perfect fit is illusory.
