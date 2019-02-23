@@ -48,11 +48,11 @@
   <h1>Time Series Prediction</h1>
   <h3>Felix Bogdanski, since 25.1.2016</h3>
 
-  In <a href="/digit-recognition">Digit Recognition</a>, we saw that a neural net can be trained with digits from several typesets to recognize digits from new, unknown typesets through generalization. Aside from these classification tasks, neural nets can be used to predict future values, behaviors or patterns solely based on learned history. In the machine learning literature, this is often referred to as time series prediction, because, you know, values over time need to be predicted. Hah! To illustrate the concept, we will train a neural net to learn the shape of a sinusoidal wave, so it can continue to draw the shape without any help. As always, I will use the library NeuroFlow, and you check the code on [GitHub.](https://github.com/zenecture/neuroflow)
+  In <a href="/digit-recognition">Digit Recognition</a>, we saw that a neural net can be trained with digits from several typesets to recognize digits from new, unknown typesets through generalization. Aside from these classification tasks, neural nets can be used to predict future values, behaviors or patterns solely based on learned history. In the machine learning literature, this is often referred to as time series prediction, because, you know, values over time need to be predicted. Hah! To illustrate the concept, we will train a neural net to learn the shape of a sinusoidal wave, so it can continue to draw the shape without any help. As always, I will use the library NeuroFlow, and you check the code on <a href="https://github.com/zenecture/neuroflow">GitHub</a>.
 
   <h2>Introduction of the shape</h2>
 
-  If we, as humans, want to predict the future based on historic observations, we would have no other chance but to be guided by the shape drawn _so far._ Let's study the plot below, asking ourselves: How would a human continue the plot?
+  If we, as humans, want to predict the future based on historic observations, we would have no other chance but to be guided by the shape drawn <em>so far</em>. Let's study the plot below, asking ourselves: How would a human continue the plot?
 
   <p class="gentle gentle-bottom text-center">
     <img src="/time-series-prediction/sinuspredictdr.png" style="width: 50%;" />
@@ -111,11 +111,11 @@
   </table>
 
 
-  Ranging from 0.0 until 0.75, these discrete values drawn from our function with step size 0.05 will be the basis for training. Now, one could come up with the idea to just memorize _all_ values, so a sufficiently reasonable value can be picked based on comparison. For instance, to continue at the point 0.75 in our plot, we could simply examine the area close to 0.15, noticing a similar value close to 1, and hence go downwards. Well, of course this is cheating, but if a good cheat is a superior solution, why not cheat? Being hackers, we wouldn't care. What's really limiting here is the fact that the whole data set needs to be kept in memory, which can be infeasible for large sets, plus for more complex shapes, this approach would quickly result in a lot of weird rules and exceptions to be made in order to find comprehensible predictions.
+  Ranging from 0.0 until 0.75, these discrete values drawn from our function with step size 0.05 will be the basis for training. Now, one could come up with the idea to just memorize <em>all</em> values, so a sufficiently reasonable value can be picked based on comparison. For instance, to continue at the point 0.75 in our plot, we could simply examine the area close to 0.15, noticing a similar value close to 1, and hence go downwards. Well, of course this is cheating, but if a good cheat is a superior solution, why not cheat? Being hackers, we wouldn't care. What's really limiting here is the fact that the whole data set needs to be kept in memory, which can be infeasible for large sets, plus for more complex shapes, this approach would quickly result in a lot of weird rules and exceptions to be made in order to find comprehensible predictions.
 
   <h2>Net to the rescue</h2>
 
-  Let's go back to our table and see if a neural net can _learn_ the shape, instead of simply memorizing it. Here, we want our net architecture to be of kind <span class="tex" inline="true" data-expr="[3, 5, 3, 1]"></span>. Three input neurons, two hidden layers with five and three neurons respectively, as well as one neuron for the output layer will capture the data shown in the table.
+  Let's go back to our table and see if a neural net can <em>learn</em> the shape, instead of simply memorizing it. Here, we want our net architecture to be of kind <span class="tex" inline="true" data-expr="[3, 5, 3, 1]"></span>. Three input neurons, two hidden layers with five and three neurons respectively, as well as one neuron for the output layer will capture the data shown in the table.
 
   <p class="gentle gentle-bottom text-center">
     <img src="/time-series-prediction/sinuspredictnet.png" style="width: 50%;" />
@@ -157,7 +157,7 @@
   [success] Total time: 4 s, completed 25.01.2016 14:20:56
   </code></pre>
 
-  After a pretty short time, we see good news. Now, how can we check if our net can successfully predict the sinusoidal wave? We can't simply call our net like a sinus function to map from one input value to one output value, e. g. something like <span class="tex" inline="true" data-expr="Net(0.75) == sin(0.75)"></span>. Our net does not care about any <span class="tex" inline="true" data-expr="x"></span> values, because it was trained purely based on the function values <span class="tex" inline="true" data-expr="f(x)"></span>, or the slope pattern in general. We need to feed our net with a three-dimensional input vector holding the first three, original function values to predict the fourth step, then drop the first original step and append the recently predicted step to predict the fifth step, et cetera. In other words, we need to _traverse_ the net. Let's code this:
+  After a pretty short time, we see good news. Now, how can we check if our net can successfully predict the sinusoidal wave? We can't simply call our net like a sinus function to map from one input value to one output value, e. g. something like <span class="tex" inline="true" data-expr="Net(0.75) == sin(0.75)"></span>. Our net does not care about any <span class="tex" inline="true" data-expr="x"></span> values, because it was trained purely based on the function values <span class="tex" inline="true" data-expr="f(x)"></span>, or the slope pattern in general. We need to feed our net with a three-dimensional input vector holding the first three, original function values to predict the fourth step, then drop the first original step and append the recently predicted step to predict the fifth step, et cetera. In other words, we need to <em>traverse</em> the net. Let's code this:
 
   <pre><code class="scala">
   val initial = Range.Double(0.0, 0.15, 0.05).zipWithIndex.map(p => (p._1, xs.head(p._2)))
@@ -194,7 +194,7 @@
 
   That's it! We have trained our net to learn and continue the sinusoidal shape. Now, I know that this is a rather academic example, but to train a neural net to learn more complex shapes is straightforward from here.
 
-  Thanks for reading!
+  Thanks for reading.
 
   <div id="disqus_thread"></div>
 
