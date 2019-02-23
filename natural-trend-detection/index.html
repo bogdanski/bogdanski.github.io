@@ -48,12 +48,12 @@
   <h1>Natural Trend Detection</h1>
   <h3>Felix Bogdanski, at 12.1.2016</h3>
 
-  In <a href="/blog/gaussian-vs-neural-net">Gaussian vs. Neural Net</a> we compared both, now we research how a neural net can be applied for the detection of trends in 2d spaces. You can check the code and data on <a href="https://github.com/zenecture/neuroflow">GitHub</a>.
+  In <a href="/gaussian-vs-neural-net">Gaussian vs. Neural Net</a> we compared both, now we research how a neural net can be applied for the detection of trends in 2d spaces. You can check the code and data on <a href="https://github.com/zenecture/neuroflow">GitHub</a>.
 
   A trend indicates a lot of people like a certain thing. Possible use cases for detecting trends are stock market, clicks on headlines, social and video platforms, et cetera. When I think of a trend, I see a graph, a steep curve to the top, or bottom if negative. To me, the definition of a trend is a graphical one, thus a good candidate for a neural net, since it learns graphical shapes in a <em>natural way</em>, e. g. neural receptors similar to the human retina.
 
   <p class="gentle gentle-bottom text-center">
-    <img src="/blog/natural-trend-detection/trendflat.png" style="width: 50%;" />
+    <img src="/natural-trend-detection/trendflat.png" style="width: 50%;" />
   </p>
 
   Looking at the candle bars, we can clearly see an uptrend, supported by the linear function drawn in purple. The green line is a constant, flat function and is the opposite of a trend. How can we train a neural net to differentiate between these two? 
@@ -160,7 +160,7 @@
   Let's make it a bit harder and simulate a <em>jamming</em> trend:
 
   <p class="gentle gentle-bottom text-center">
-    <img src="/blog/natural-trend-detection/jammingtrend.png" style="width: 50%;" />
+    <img src="/natural-trend-detection/jammingtrend.png" style="width: 50%;" />
   </p>
 
   <pre><code class="scala">
@@ -178,7 +178,7 @@
   What about a curve first being a downtrend, but then recovering to the original level:
 
   <p class="gentle gentle-bottom text-center">
-    <img src="/blog/natural-trend-detection/herozero.png" style="width: 50%;" />
+    <img src="/natural-trend-detection/herozero.png" style="width: 50%;" />
   </p>
 
   <pre><code class="scala">
@@ -196,7 +196,7 @@
   Now, we want this oscillating sideways movement to be evaluated:
 
   <p class="gentle gentle-bottom text-center">
-    <img src="/blog/natural-trend-detection/oscillating.png" style="width: 50%;" />
+    <img src="/natural-trend-detection/oscillating.png" style="width: 50%;" />
   </p>
 
   <pre><code class="scala">
@@ -210,7 +210,7 @@
   Strike, our net is confident that this is <em>not</em> an uptrend. Check! Let's take a truly random sideways movement:
 
   <p class="gentle gentle-bottom text-center">
-    <img src="/blog/natural-trend-detection/random.png" style="width: 50%;" />
+    <img src="/natural-trend-detection/random.png" style="width: 50%;" />
   </p>
 
   <pre><code class="scala">
@@ -228,7 +228,7 @@
   I want to try an oscillating uptrend:
 
   <p class="gentle gentle-bottom text-center">
-    <img src="/blog/natural-trend-detection/oscillatingup.png" style="width: 50%;" />
+    <img src="/natural-trend-detection/oscillatingup.png" style="width: 50%;" />
   </p>
 
   <pre><code class="scala">
@@ -242,7 +242,7 @@
   Our net is pretty confident that this is an uptrend. Check! But what if we slighty randomize this trend, to make it seem more natural:
 
   <p class="gentle gentle-bottom text-center">
-    <img src="/blog/natural-trend-detection/realworld.png" style="width: 50%;" />
+    <img src="/natural-trend-detection/realworld.png" style="width: 50%;" />
   </p>
 
   <pre><code class="scala">
@@ -260,7 +260,7 @@
   Finally, let's try the oscillating downtrend:
 
   <p class="gentle gentle-bottom text-center">
-    <img src="/blog/natural-trend-detection/oscillatingdown.png" style="width: 50%;" />
+    <img src="/natural-trend-detection/oscillatingdown.png" style="width: 50%;" />
   </p>
 
   <pre><code class="scala">
