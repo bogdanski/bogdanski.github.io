@@ -49,7 +49,7 @@
   <h3>Felix Bogdanski, since 11.1.2016</h3>
 
   In <a href="/artificial-neural-networks">Artificial Neural Networks</a> we studied the core concepts of these powerful, universal approximators. In this article, we research how a neural net can be used instead of a gaussian for basic predictive analysis. You can check the code and data on <a href="https://github.com/zenecture/neuroflow">GitHub</a>.
-
+  <br><br>
   <a href="http://archive.ics.uci.edu/ml/datasets/Adult">This data set</a> from the University of California aggregates US census income data from 1994. The data set counts 32461 rows, which is roughly 4MB. Being a multivariate data set, we could pick arbitrary combinations of features for our model. To keep things simple, we work with only age and a boolean, indicating if a person makes more than 50K a year. In the end, we want a probability of earning more than 50K a year with respect to age.
 
   <pre><code class="bash">
@@ -66,14 +66,14 @@
 
   <p class="tex" data-expr="\mathcal{N}(x | \mu, \sigma) = \frac{1}{\sigma\sqrt{2\pi}} e^{-\frac{(x-\mu)^2}{2\sigma^2}}"></p>
 
-  While being a clever way of drawing a bell curve, the gaussian is inherently unimodal and, because of the square within the functional dependency, symmetric. Indeed, a very perfect function &mdash; but maybe _too perfect for nature?_
+  While being a clever way of drawing a bell curve, the gaussian is inherently unimodal and, because of the square within the functional dependency, symmetric. Indeed, a very perfect function &mdash; but maybe <em>too perfect for nature?</em>
 
   <p class="gentle gentle-bottom text-center">
     <img src="/blog/gaussian-vs-neural-net/normage.png" style="width: 50%;" />
   </p>
 
   The plot has mean <span class="tex" inline="true" data-expr="\mu = 44.24"></span>, it is the average age of people earning more than 50k. Chances are higher for this person to be 44 than 18 years. Sounds pretty reasonable. But my gut tells me there is something wrong about the symmetry. Is it true, that 18 and 70 agers earn the same? Intuitively, I would say no, if a person is 70 years old, he or she earns more money than the average kid of 18 years. Think of pension income, interest income, or even a regular job. Maybe, the gaussian is just too perfect to explain nature.
-
+  <br><br>
   Let's build a more natural model using our beloved neural nets. We choose layout <span class="tex" inline="true" data-expr="L = [1,20,1]"></span>, so 1 neuron for the input age, 20 neurons for the dense layer and one neuron for the output boolean encoded as <span class="tex" inline="true" data-expr="true=1, false=0"></span>:
 
   <pre><code class="scala">
@@ -99,7 +99,7 @@
     <img src="/blog/gaussian-vs-neural-net/gaussiannet.png" style="width: 50%;" />
   </p>
 
-  Comparing the gaussian with the net, we notice a slight difference between them. While the gaussian is not able to capture the asymmetry, our net can capture this shape in a natural way. The gaussian works with mean and variance to fit a training set. However, the gaussian shape will always <em>dominate<em>, because of its functional form. A neural net, on the other hand, <em>learns<em> the underlying data. If, for instance, our data set was multimodal, i. e. with two peaks, the gaussian would give poor results, whereas the neural net would be able to capture it.
+  Comparing the gaussian with the net, we notice a slight difference between them. While the gaussian is not able to capture the asymmetry, our net can capture this shape in a natural way. The gaussian works with mean and variance to fit a training set. However, the gaussian shape will always <em>dominate</em>, because of its functional form. A neural net, on the other hand, <em>learns</em> the underlying data. If, for instance, our data set was multimodal, i. e. with two peaks, the gaussian would give poor results, whereas the neural net would be able to capture it.
 
   Thanks for reading.
 
