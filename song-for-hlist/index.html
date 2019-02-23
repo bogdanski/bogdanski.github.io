@@ -98,7 +98,7 @@
   val extracted = prepared.map(_.send)
   </code></pre>
 
-  The <em>(H, E, L, L, O, \_\_, W, O, R, L, D)</em>-tuple is syntactic sugar applied by the compiler for a built-in <em>Tuple11</em>-class. After wrapping these into our sending envelope <em>Σ</em>, we can finally send the objects in sequential order. Remember, the success of the sending process is expressed as <em>Option[T]</em>, depending on the original object type <em>T</em>, and to us, it is somewhat important to not lose the type <em>T</em> right after sending, because we need it for further processing.
+  The <em>(H, E, L, L, O, __, W, O, R, L, D)</em>-tuple is syntactic sugar applied by the compiler for a built-in <em>Tuple11</em>-class. After wrapping these into our sending envelope <em>Σ</em>, we can finally send the objects in sequential order. Remember, the success of the sending process is expressed as <em>Option[T]</em>, depending on the original object type <em>T</em>, and to us, it is somewhat important to not lose the type <em>T</em> right after sending, because we need it for further processing.
 
   <pre><code class="scala">
   val prepared: Iterator[Σ[Any]] = ...
@@ -126,7 +126,7 @@
   val prepared: Iterator[Σ[Any]] = message.productIterator.map(char => Σ(char)) // <--!
   </code></pre>
 
-  What do we want to do here? Simply speaking, we want to iterate over an arbitrary combination of objects, wrap these into a sending envelope _Σ_ and send the objects to the machine. What if instead of using the iterator, we provide a generic function which directly lifts all objects of this particular _Tuple11[\_]_ to give a _Tuple11[Σ[\_]]_:
+  What do we want to do here? Simply speaking, we want to iterate over an arbitrary combination of objects, wrap these into a sending envelope _Σ_ and send the objects to the machine. What if instead of using the iterator, we provide a generic function which directly lifts all objects of this particular _Tuple11[_]_ to give a _Tuple11[Σ[_]]_:
 
   <pre><code class="scala">
   def lift11[_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11]
@@ -164,7 +164,7 @@
   case object HNil extends HList
   </code></pre>
 
-  Let's have a quick look at the details. First, we simply have a marker trait _HList_. Whenever we need to refer to any other _HList_ on the type-level, we can declare the bounds to be of kind _\_ <: HList_, thus leading the compiler into the right direction when inferring. The case class _::_ (yes, a valid name for a type) has two value and type parameters, namely the _head_ item of type _H_ as well as the _tail_ list of type _+T <: HList_. Is it just like a regular list then? No, because both the case class _::_ and its second type parameter are bound to _HList_, we have a recursive type instead. The regular list is a recursive data structure on the value-level, but not on the type-level! In contrast, the heterogenous list is a recursive data structure on both the value- and type-level. The case object _HNil_, also an _HList_, is for stopping the recursion on both the type- and the value-level. Further, _HNil_ is the starting value for inductive proofs through implicit type class resolution. Every _HList_ comes with a function _::_ (yes, a valid name). This right-associative operator is for chaining objects in the usual Scala way, thus making the following syntax possible:
+  Let's have a quick look at the details. First, we simply have a marker trait _HList_. Whenever we need to refer to any other _HList_ on the type-level, we can declare the bounds to be of kind <em>_ <: HList</em>, thus leading the compiler into the right direction when inferring. The case class _::_ (yes, a valid name for a type) has two value and type parameters, namely the _head_ item of type _H_ as well as the _tail_ list of type _+T <: HList_. Is it just like a regular list then? No, because both the case class _::_ and its second type parameter are bound to _HList_, we have a recursive type instead. The regular list is a recursive data structure on the value-level, but not on the type-level! In contrast, the heterogenous list is a recursive data structure on both the value- and type-level. The case object _HNil_, also an _HList_, is for stopping the recursion on both the type- and the value-level. Further, _HNil_ is the starting value for inductive proofs through implicit type class resolution. Every _HList_ comes with a function _::_ (yes, a valid name). This right-associative operator is for chaining objects in the usual Scala way, thus making the following syntax possible:
 
   <pre><code class="scala">
   val list = H :: E :: L :: L :: O :: Nil
