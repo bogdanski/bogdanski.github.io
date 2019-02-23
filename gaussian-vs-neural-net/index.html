@@ -69,7 +69,7 @@
   While being a clever way of drawing a bell curve, the gaussian is inherently unimodal and, because of the square within the functional dependency, symmetric. Indeed, a very perfect function &mdash; but maybe <em>too perfect for nature?</em>
 
   <p class="gentle gentle-bottom text-center">
-    <img src="/blog/gaussian-vs-neural-net/normage.png" style="width: 50%;" />
+    <img src="/gaussian-vs-neural-net/normage.png" style="width: 50%;" />
   </p>
 
   The plot has mean <span class="tex" inline="true" data-expr="\mu = 44.24"></span>, it is the average age of people earning more than 50k. Chances are higher for this person to be 44 than 18 years. Sounds pretty reasonable. But my gut tells me there is something wrong about the symmetry. Is it true, that 18 and 70 agers earn the same? Intuitively, I would say no, if a person is 70 years old, he or she earns more money than the average kid of 18 years. Think of pension income, interest income, or even a regular job. Maybe, the gaussian is just too perfect to explain nature.
@@ -96,7 +96,7 @@
   Furthermore, we need to map the age to domain <span class="tex" inline="true" data-expr="[0, 1]"></span>, because this is where the sigmoid operates on. So, we divide by maximum age and start training. After a couple of seconds, and a cup of sencha, training with 2000 samples succeeds, so we can normalize and plot both models:
 
   <p class="gentle gentle-bottom text-center">
-    <img src="/blog/gaussian-vs-neural-net/gaussiannet.png" style="width: 50%;" />
+    <img src="/gaussian-vs-neural-net/gaussiannet.png" style="width: 50%;" />
   </p>
 
   Comparing the gaussian with the net, we notice a slight difference between them. While the gaussian is not able to capture the asymmetry, our net can capture this shape in a natural way. The gaussian works with mean and variance to fit a training set. However, the gaussian shape will always <em>dominate</em>, because of its functional form. A neural net, on the other hand, <em>learns</em> the underlying data. If, for instance, our data set was multimodal, i. e. with two peaks, the gaussian would give poor results, whereas the neural net would be able to capture it.
