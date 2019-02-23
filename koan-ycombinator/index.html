@@ -56,13 +56,13 @@
   }
   </code></pre>
 
-  You might have a rough idea about what this _YCombinator_ does, but can't grasp the whole concept of it, e. g. in terms of drawing a call stack in your head. What can we do with this baffling thing?
+  You might have a rough idea about what this <em>YCombinator</em> does, but can't grasp the whole concept of it, e. g. in terms of drawing a call stack in your head. What can we do with this baffling thing?
 
   <p class="gentle gentle-bottom text-center">
     <img src="/koan-ycombinator/recursionvoid.png" style="width: 50%;" />
   </p>
 
-  Let's start with a recursive implementation of the faculty function _n! = n \* (n - 1) \* (n - 2) \* ... \* 1_:
+  Let's start with a recursive implementation of the faculty function <em>n! = n \* (n - 1) \* (n - 2) \* ... \* 1</em>:
 
   <pre><code class="scala">
   object Factorial {
@@ -72,7 +72,7 @@
   val a = Factorial(5) // is 120
   </code></pre>
 
-  This is a straightforward thing. Since _defs_ are method calls, thus functions with a this-pointer and a well-known memory location, we can express this recursive pattern by safely referring to _apply_ within _apply_. Now, what if we can't refer to our own logic within our logic, because we simply don't have a name to refer to? Can we still express this faculty function in a recursive manner?
+  This is a straightforward thing. Since <em>defs</em> are method calls, thus functions with a this-pointer and a well-known memory location, we can express this recursive pattern by safely referring to <em>apply</em> within <em>apply</em>. Now, what if we can't refer to our own logic within our logic, because we simply don't have a name to refer to? Can we still express this faculty function in a recursive manner?
 
   <pre><code class="scala">
   object FactorialTailrec {
@@ -85,7 +85,7 @@
   val b = FactorialTailrec(5)
   </code></pre>
 
-  If we try it with a nested tail-recursive version, we could express _apply_ without using _apply_, but still we need to call _fac_ within _fac_, and since this is the very same pattern, just on a different level, all we can really do to express the faculty function without a reference to its own name is to do what the compiler would do with _@tailrec_: eliminate recursion through an imperative while-loop!
+  If we try it with a nested tail-recursive version, we could express <em>apply</em> without using <em>apply</em>, but still we need to call <em>fac</em> within <em>fac</em>, and since this is the very same pattern, just on a different level, all we can really do to express the faculty function without a reference to its own name is to do what the compiler would do with <em>@tailrec</em>: eliminate recursion through an imperative while-loop!
 
   <pre><code class="scala">
   object FactorialIter {
@@ -105,7 +105,7 @@
 
   What do we get? Well, a long but working faculty function that does not refer to itself!<a href="#note-2"><sup>2</sup></a> And since even the most elegant functional wizardish code at one point has to be translated to imperative assembler instructions, we could argue that this is the only way to express recursive functions without a name.
 
-  Is it, really? Let's go back to our _YCombinator_ and try to define the faculty function with it:
+  Is it, really? Let's go back to our <em>YCombinator</em> and try to define the faculty function with it:
 
   <pre><code class="scala">
   object YCombinator {
@@ -115,9 +115,9 @@
   val d = YCombinator[Int, Int](a => b => if (b > 1) b * a(b - 1) else 1)(5) // immediately applying 5! = 120
   </code></pre>
 
-  This variant of the faculty function is recursive, but it doesn't have a name to refer to within its definition. All it has are parameters _a_ and _b_. Apparently, we can use the _YCombinator_ to express nameless, anonymous, recursive functions. Granted. But, how does this work? Let's step into the beauty of it.
+  This variant of the faculty function is recursive, but it doesn't have a name to refer to within its definition. All it has are parameters <em>a</em> and <em>b</em>. Apparently, we can use the <em>YCombinator</em> to express nameless, anonymous, recursive functions. Granted. But, how does this work? Let's step into the beauty of it.
 
-  The function _f: (A => B) => (A => B)_ can be considered as a template. The first function _A => B_ is the continuation of the second function _A => B_. Using the _YCombinator_, we can define the recursive factorial in terms of _(a: Int => Int) => ((b: Int) => ...)_ where _a_ is the same logic as _(b => ...)_, but never the same instance. The job of the _YCombinator_ is to _pre-set_ this logic _a_ for all subsequent calls from inside _(b => ...)_. If we write:
+  The function <em>f: (A => B) => (A => B)</em> can be considered as a template. The first function <em>A => B</em> is the continuation of the second function <em>A => B</em>. Using the <em>YCombinator</em>, we can define the recursive factorial in terms of <em>(a: Int => Int) => ((b: Int) => ...)</em> where <em>a</em> is the same logic as <em>(b => ...)</em>, but never the same instance. The job of the <em>YCombinator</em> is to <em>pre-set</em> this logic <em>a</em> for all subsequent calls from inside <em>(b => ...)</em>. If we write:
 
   <pre><code class="scala">
   object Overflominator {
@@ -125,7 +125,7 @@
   }
   </code></pre>
 
-  This would compile, because it is the same on the type-level. But there will be a stack overflow error as soon as our factorial function is passed at run-time. The heart of the _YCombinator_ is the partial application _(\_)_ in tail position, so let's rewrite it to explicitly show the ad-hoc application, which _tames_ the recursion:
+  This would compile, because it is the same on the type-level. But there will be a stack overflow error as soon as our factorial function is passed at run-time. The heart of the <em>YCombinator</em> is the partial application <em>(_)</em> in tail position, so let's rewrite it to explicitly show the ad-hoc application, which <em>tames</em> the recursion:
 
   <pre><code class="scala">
   object ExplicitYCombinator {
@@ -133,13 +133,13 @@
   }
   </code></pre>
 
-  So calling the _YCombinator_ with our factorial function will give us a function object. When we call this function object with a number, what will happen? Before it computes something with this number, it will create its own logic as function object _X_, which can be used by factorial function _A_ to continue, if need be, or terminate. When the current factorial _A_ needs to continue, it calls this function object _X_. When _X_ is called, it will do the same thing before handing out the desired next factorial function _B_: it will prepare the factorial function _B_ with its own logic as function object _Y_ and then return this next factorial function _B_, which, hence, when called from current factorial function _A_ via _X_, can continue the computation through the very same recursive mechanism _Y_ offers, or terminate. When it terminates, the call stack will unwind and give the desired result.
+  So calling the <em>YCombinator</em> with our factorial function will give us a function object. When we call this function object with a number, what will happen? Before it computes something with this number, it will create its own logic as function object <em>X</em>, which can be used by factorial function <em>A</em> to continue, if need be, or terminate. When the current factorial <em>A</em> needs to continue, it calls this function object <em>X</em>. When <em>X</em> is called, it will do the same thing before handing out the desired next factorial function <em>B</em>: it will prepare the factorial function <em>B</em> with its own logic as function object <em>Y</em> and then return this next factorial function <em>B</em>, which, hence, when called from current factorial function <em>A</em> via <em>X</em>, can continue the computation through the very same recursive mechanism <em>Y</em> offers, or terminate. When it terminates, the call stack will unwind and give the desired result.
 
   Thanks for reading.
 
   <hr>
 
-  <small id="note-1">1: The _YCombinator_ can be defined in a way which is <a target="_blank" href="https://github.com/zenecture/techtalk/blob/master/ycombinator/src/main/scala/ycombinator/Run/Run.scala#L62">closer to Curry's original formulation.</a> In this implementation, the recursion is realized by deftly interweaving a combinator case class instead of using native recursion. I find that this version is a little less intuitive to explain in plain english. So instead, I picked the native, recursive version to illustrate the concept of it. Although they are different, both implementations carry out the same idea.</small>
+  <small id="note-1">1: The <em>YCombinator</em> can be defined in a way which is <a target="_blank" href="https://github.com/zenecture/techtalk/blob/master/ycombinator/src/main/scala/ycombinator/Run/Run.scala#L62">closer to Curry's original formulation.</a> In this implementation, the recursion is realized by deftly interweaving a combinator case class instead of using native recursion. I find that this version is a little less intuitive to explain in plain english. So instead, I picked the native, recursive version to illustrate the concept of it. Although they are different, both implementations carry out the same idea.</small>
 
   <small id="note-2">2: A true zen master would question this, of course.</small>
 
