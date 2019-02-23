@@ -47,11 +47,11 @@
   <h1>A Song for HList</h1>
   <h3>Felix Bogdanski, since 30.5.2016</h3>
 
-  In this article I want to motivate the existence of heterogenous lists, often simply called HLists, in Scala. Never heard of them? In NeuroFlow, you use them, because the layout graph is implemented as a HList. Think of a linked list that knows the types of its objects, instead of generalizing all objects to a type all objects have in common. While being much like the _TupleN_ class from a semantic perspective, it overcomes severe limitations of it. Together, we will derive a minimalistic HList implementation. We will show _why_ HLists not only are a good alternative for tuples, but also pretty good in reducing boilerplate and abstracting over arity. You can check the code of this HList implementation on [GitHub](https://github.com/zenecture/techtalk/tree/master/hlist/src/main/scala/hlist). If you are on the hunt for a full-fledged HList library ready for production use or some really good inspiration of what is possible at the type-level, I strongly recommend [Shapeless](https://github.com/milessabin/shapeless).
+  In this article I want to motivate the existence of heterogenous lists, often simply called HLists, in Scala. Never heard of them? In NeuroFlow, you use them, because the layout graph is implemented as a HList. Think of a linked list that knows the types of its objects, instead of generalizing all objects to a type all objects have in common. While being much like the <em>TupleN</em> class from a semantic perspective, it overcomes severe limitations of it. Together, we will derive a minimalistic HList implementation. We will show <em>why</em> HLists not only are a good alternative for tuples, but also pretty good in reducing boilerplate and abstracting over arity. You can check the code of <a href="https://github.com/zenecture/techtalk/tree/master/hlist/src/main/scala/hlist">this</a> HList implementation on GitHub. If you are on the hunt for a full-fledged HList library ready for production use or some really good inspiration of what is possible at the type-level, I strongly recommend <a href="https://github.com/milessabin/shapeless">Shapeless</a>.
 
   <h2>The Challenge</h2>
 
-  Let's imagine a very simple telegram machine. The machine is a write-only machine, so all we can do is to send objects. Anyone can listen to this telegram machine if needed, but all _we_ care for is sending objects. The machine offers a simple API we can call to send objects in sequential order, e. g. letters or numbers, so the telegram machine can pipe these objects over the real wire to some other telegram machine.
+  Let's imagine a very simple telegram machine. The machine is a write-only machine, so all we can do is to send objects. Anyone can listen to this telegram machine if needed, but all we care for is sending objects. The machine offers a simple API we can call to send objects in sequential order, e. g. letters or numbers, so the telegram machine can pipe these objects over the real wire to some other telegram machine.
 
   <p class="gentle gentle-bottom text-center">
     <img src="/song-for-hlist/telegram.png" style="width: 50%;" />
@@ -59,7 +59,7 @@
 
   The protocol is also very simple: We send object A, if the transmission is okay, we simply get the same object back. If the transmission fails, we don't get it back. This pattern makes it possible for us to resend objects on failure. (Don't you worry about the response time in this example. :-))
 
-  The thing is, we can't just send plain objects to the telegram machine. To make sure that our transmission will not fail, the object needs to be wrapped in a _sending envelope._ This envelope provides a _send_ function to enrich the object with required meta information for a frictionless transmission. Let's code it in Scala:
+  The thing is, we can't just send plain objects to the telegram machine. To make sure that our transmission will not fail, the object needs to be wrapped in a <em>sending envelope<em>. This envelope provides a <em>send</em> function to enrich the object with required meta information for a frictionless transmission. Let's code it in Scala:
 
   <pre><code class="scala">
   case class Σ[T](item: T) {
@@ -70,7 +70,7 @@
   }
   </code></pre>
 
-  Here, our case class _Σ_ (sigma is for _sending envelope_) takes an item of type _T_ and offers to _send_ it to the telegram machine. The error probability is 0.5, expressed through this random number trick. When the transmission succeeds, we get _Some(item)_ back, if it fails, we get _None_ (both results being a refinement of _Option[T]_). No surprises here, the behavior is implemented just as discussed.
+  Here, our case class <em>Σ</em> (sigma is for <em>sending envelope</em>) takes an item of type <em>T</em> and offers to <em>send</em> it to the telegram machine. The error probability is 0.5, expressed through this random number trick. When the transmission succeeds, we get <em>Some(item)</em> back, if it fails, we get <em>None</em> (both results being a refinement of <em>Option[T]</em>). No surprises here, the behavior is implemented just as discussed.
 
   Furthermore, let's define some objects and types, so we can send something meaningful over to the telegram machine:
 
@@ -90,7 +90,7 @@
   }
   </code></pre>
 
-  It is important to notice that all objects are absolutely unique. There are no relations between the types. The only type all these objects have in common is _Any_. Using our _Alphabet_ and _Σ_ we can now build arbitrary combinations and send them to the machine:
+  It is important to notice that all objects are absolutely unique. There are no relations between the types. The only type all these objects have in common is <em>Any</em>. Using our <em>Alphabet</em> and <em>Σ</em> we can now build arbitrary combinations and send them to the machine:
 
   <pre><code class="scala">
   val message = (H, E, L, L, O, __, W, O, R, L, D)
@@ -98,7 +98,7 @@
   val extracted = prepared.map(_.send)
   </code></pre>
 
-  The _(H, E, L, L, O, \_\_, W, O, R, L, D)_-tuple is syntactic sugar applied by the compiler for a built-in _Tuple11_-class. After wrapping these into our sending envelope _Σ_, we can finally send the objects in sequential order. Remember, the success of the sending process is expressed as _Option[T]_, depending on the original object type _T_, and to us, it is somewhat important to not lose the type _T_ right after sending, because we need it for further processing.
+  The <em>(H, E, L, L, O, \_\_, W, O, R, L, D)</em>-tuple is syntactic sugar applied by the compiler for a built-in <em>Tuple11</em>-class. After wrapping these into our sending envelope <em>Σ</em>, we can finally send the objects in sequential order. Remember, the success of the sending process is expressed as <em>Option[T]</em>, depending on the original object type <em>T</em>, and to us, it is somewhat important to not lose the type <em>T</em> right after sending, because we need it for further processing.
 
   <pre><code class="scala">
   val prepared: Iterator[Σ[Any]] = ...
