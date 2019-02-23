@@ -71,7 +71,7 @@
   val flat = Range.Double(0.0, 1.0, 0.01).flatMap(i => Seq(i, 0.3))
   </code></pre>
 
-  Here, the <em>trend<em> data is drawn from the linear function from 0.0 until 1.0 with step size 0.01, whereas <em>flat</em> is a constant discrete line. The constant 0.3 is picked arbitrarily and could be marginalized out through a richer training set. Note that choosing, for instance, 0.5 instead of 0.3 leads to similar results. The important thing is that both graphical shapes are clearly separable.
+  Here, the <em>trend</em> data is drawn from the linear function from 0.0 until 1.0 with step size 0.01, whereas <em>flat</em> is a constant discrete line. The constant 0.3 is picked arbitrarily and could be marginalized out through a richer training set. Note that choosing, for instance, 0.5 instead of 0.3 leads to similar results. The important thing is that both graphical shapes are clearly separable.
 
   Next, we need to spawn a neural network:
 
