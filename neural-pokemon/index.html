@@ -50,7 +50,7 @@
   Whenever I see Pokémons, they remind me of my younger days. Just recently there was this virtual reality revival. I never really got obsessive about the card games, I'd rather collect and trade them on the schoolyard for the social aspect. The video games were not bad actually. I spent quite some time gaining XP points there on my gameboy, he he.
 
   <div style="text-align:center; width: 100%; padding: 4em;">
-      <img src="/user/pages/blog/neural-pokemon/International_Pokémon_logo.svg.png" width="50%" />
+      <img src="/neural-pokemon/International_Pokémon_logo.svg.png" width="50%" />
   </div>
 
   So, on Kaggle I found this data set <a href="https://www.kaggle.com/abcsds/pokemon">Pokémon with stats</a>, and I couldn't resist to feed it into <a href="https://github.com/zenecture/neuroflow">NeuroFlow</a>. Surprisingly, there are 721 Pokémon out there, and the best thing is, they all come with stats, like attack and health points. Code is on <a href="https://github.com/zenecture/neuroflow/blob/master/playground/src/main/scala/neuroflow/playground/PokeMonCluster.scala">GitHub</a>, as usual.
@@ -60,7 +60,7 @@
   I want to find similar Pokémons, and I want help from a neural network. How can a net detect similarities between these monsters? By using compression. For instance, after training the identity function <span class="tex" inline="true" data-expr="f(x) \rightarrow x"></span>, the hidden layers will reveal interesting properties about how <span class="tex" inline="true" data-expr="x"></span>, our monsters, are structually composed.
 
   <div style="text-align:center; width: 100%; margin-bottom: 2em;">
-          <img src="/user/pages/blog/neural-pokemon/generalbycomp.png" width="33%" /><br>
+          <img src="/neural-pokemon/generalbycomp.png" width="33%" /><br>
           <small>(AutoEncoder)</small>
   </div>
 
@@ -93,7 +93,7 @@
   We want to start with random weights and <a href="https://en.wikipedia.org/wiki/Rectifier_(neural_networks)">rectified linear units (ReLU)</a>. Compared to the <a href="https://en.wikipedia.org/wiki/Logistic_function">Sigmoid</a> activator, the ReLU is a bit more simple. And simplicity is good, it can be the basis for something complex as a neural net. 
 
   <div style="text-align:center; width: 100%; padding: 2em;" id="relu">
-          <img src="/user/pages/blog/neural-pokemon/relu.png" width="33%" /><br>
+          <img src="/neural-pokemon/relu.png" width="33%" /><br>
   </div>
 
   The ReLU can give faster training than Sigmoid or Tanh, because the gradient is constant and not vanishing; no matter where the positive weights stand, the gradient is always 1. And sparsity comes for free, the weights make cells act like on-off switches quickly and this is where the non-linearity comes from.
@@ -184,22 +184,22 @@
   After the training is done, we normalize our vectors to make sure that we have 3d-coordinates within range [0:1]. Using beloved <a href="http://www.gnuplot.info">gnuplot</a>, we can fly through the three-dimensional plot. If you want to have the same flight, you should do the training on your machine. However, let's deep dive into the result space...
 
   <div style="text-align:center; width: 100%; padding: 2em;">
-          <a href="/user/pages/blog/neural-pokemon/e.png"><img src="/user/pages/blog/neural-pokemon/e.png" width="80%" /></a><br>
+          <a href="/neural-pokemon/e.png"><img src="/neural-pokemon/e.png" width="80%" /></a><br>
           <p>... we find a couple of clusters here. Remember we used five features (type, total, hp, attack, defense), so the net would have to compromise between all 721 monsters.</p>
 
-          <a href="/user/pages/blog/neural-pokemon/a.png"><img src="/user/pages/blog/neural-pokemon/a.png" width="80%" /></a><br>
+          <a href="/neural-pokemon/a.png"><img src="/neural-pokemon/a.png" width="80%" /></a><br>
           <p>Some groups are far away from each other, where the attribute <em>type</em> is the dominating clustering key. This comes naturally, because the type is a multi-class vector and contributes to the input vector with 19 (of 23) dimensions. Also, there is a big chunk concentrating at the bottom that is a bit hard to read, since the labels overlap. Eventually, we will discover some kind of numerical ordering in here...</p>
           
-          <a href="/user/pages/blog/neural-pokemon/b.png"><img src="/user/pages/blog/neural-pokemon/b.png" width="80%" /></a><br>
+          <a href="/neural-pokemon/b.png"><img src="/neural-pokemon/b.png" width="80%" /></a><br>
           <p>... it seems like the net thoroughly orders the <em>type</em> groups, in such a way, that monsters with higher skills are placed at the top, whereas the ones with lower skills at the bottom (or vice versa, depending on the direction).</p>
           
-          <a href="/user/pages/blog/neural-pokemon/c.png"><img src="/user/pages/blog/neural-pokemon/c.png" width="80%" /></a><br>
-      <a href="/user/pages/blog/neural-pokemon/f.png"><img src="/user/pages/blog/neural-pokemon/f.png" width="80%" /></a><br><br><br>
+          <a href="/neural-pokemon/c.png"><img src="/neural-pokemon/c.png" width="80%" /></a><br>
+      <a href="/neural-pokemon/f.png"><img src="/neural-pokemon/f.png" width="80%" /></a><br><br><br>
           <p>What happens if we remove the dominating feature <em>type</em>, which contributes most to the input dimension, thus giving the net freedom to give up the strict separation between Pokémon types?</p>
           
           <div class="row gentle-l">
-            <div class="col-xs-6"><a href="/user/pages/blog/neural-pokemon/g.png"><img src="/user/pages/blog/neural-pokemon/g.png" width="100%" /></a></div>
-        <div class="col-xs-6"><a href="/user/pages/blog/neural-pokemon/h2.png"><img src="/user/pages/blog/neural-pokemon/h2.png" width="100%" /></a></div>
+            <div class="col-xs-6"><a href="/neural-pokemon/g.png"><img src="/blog/neural-pokemon/g.png" width="100%" /></a></div>
+        <div class="col-xs-6"><a href="/neural-pokemon/h2.png"><img src="/blog/neural-pokemon/h2.png" width="100%" /></a></div>
           </div>
           
           <p class="gentle-l">... let's see. Mh, it pretty much does the same thing. It places similar Pokémons close to each other. So basically, what we can see is Pokémon2Vec. Note that here we used Sigmoids instead of ReLUs, to add more fuzzyness.</p>
