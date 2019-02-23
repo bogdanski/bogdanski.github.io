@@ -59,7 +59,7 @@
 
   The protocol is also very simple: We send object A, if the transmission is okay, we simply get the same object back. If the transmission fails, we don't get it back. This pattern makes it possible for us to resend objects on failure. (Don't you worry about the response time in this example. :-))
 
-  The thing is, we can't just send plain objects to the telegram machine. To make sure that our transmission will not fail, the object needs to be wrapped in a <em>sending envelope<em>. This envelope provides a <em>send</em> function to enrich the object with required meta information for a frictionless transmission. Let's code it in Scala:
+  The thing is, we can't just send plain objects to the telegram machine. To make sure that our transmission will not fail, the object needs to be wrapped in a <em>sending envelope</em>. This envelope provides a <em>send</em> function to enrich the object with required meta information for a frictionless transmission. Let's code it in Scala:
 
   <pre><code class="scala">
   case class Σ[T](item: T) {
