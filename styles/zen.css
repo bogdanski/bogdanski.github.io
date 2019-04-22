@@ -13,14 +13,14 @@ Dark Red      C44D58
 /* Base */
 
 html {
-  padding: 20%;
+  padding: 15%;
 }
 
 body {
   font-family: 'Open Sans', sans-serif;
   font-size: 14pt;
   line-height: 1.67em;
-  font-weight: 300;
+  font-weight: 200;
 }
 
 h1, h2, h3, h4 {
