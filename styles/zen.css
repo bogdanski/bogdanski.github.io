@@ -20,11 +20,11 @@ body, p {
   font-family: 'Open Sans', sans-serif;
   font-size: 14pt;
   line-height: 1.67em;
-  font-weight: 200;
+  font-weight: 100;
 }
 
 h1, h2, h3, h4 {
-  font-weight: 300;
+  font-weight: 200;
 }
 
 pre {
